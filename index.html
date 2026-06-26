@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Harbinger — Predictive defense for the real network.</title>
-<meta name="description" content="Harbinger builds world models for cybersecurity. Scry foresees how an intrusion will move through a network, and where your sensors go blind, before it happens." />
+<title>Harbinger Labs — We build models that foresee the breach.</title>
+<meta name="description" content="Harbinger Labs builds world models for cybersecurity. Scry foresees how an intrusion will move through a network, and where your sensors go blind, before it happens." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=VT323&display=swap" rel="stylesheet" />
@@ -12,7 +12,6 @@
   :root{
     --bg:#000;
     --panel:#0a0a0b;
-    --panel-2:#101011;
     --ink:#FFFFFF;
     --dim:#ACACAE;
     --faint:#6C6C6E;
@@ -24,29 +23,27 @@
     --term:'VT323', monospace;
 
     --ease:cubic-bezier(.22,.61,.36,1);
-    --frame:14px;            /* outer grid inset */
-    --bar:74px;              /* top bar height */
+    --frame:14px;
+    --bar:74px;
     --gut:clamp(22px,3.2vw,56px);
   }
 
   *{ box-sizing:border-box; margin:0; padding:0; }
-  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; scroll-padding-top:calc(var(--bar) + 24px); }
   body{
     background:var(--bg); color:var(--ink);
     font-family:var(--body); font-weight:400; line-height:1.6; font-size:16px;
-    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
   }
   a{ color:inherit; text-decoration:none; }
   canvas{ display:block; }
   ::selection{ background:#fff; color:#000; }
 
   /* ============ FIXED ARCHITECTURAL GRID ============ */
-  .grid{ position:fixed; inset:0; z-index:60; pointer-events:none; }
+  .grid{ position:fixed; inset:0; z-index:40; pointer-events:none; }
   .grid__frame{ position:absolute; inset:var(--frame); border:1px solid var(--line); }
-  .grid__v{ position:absolute; top:var(--frame); bottom:var(--frame); left:50%; width:1px; background:var(--line); }
+  .grid__v{ position:absolute; top:calc(var(--frame) + var(--bar)); bottom:var(--frame); left:50%; width:1px; background:var(--line); }
   .grid__h{ position:absolute; left:var(--frame); right:var(--frame); top:calc(var(--frame) + var(--bar)); height:1px; background:var(--line); }
-  /* crosshair ticks */
   .tick{ position:absolute; width:11px; height:11px; }
   .tick::before,.tick::after{ content:""; position:absolute; background:var(--line); }
   .tick::before{ left:50%; top:0; bottom:0; width:1px; transform:translateX(-.5px); }
@@ -58,56 +55,67 @@
   .tick.ct{ left:50%; top:calc(var(--frame) + var(--bar) - 5px); transform:translateX(-50%); }
   @media(max-width:820px){ .grid__v{ display:none; } .tick.ct{ display:none; } }
 
-  /* ============ FIXED CORNERS: LOGO + JOIN ============ */
-  .logo{
-    position:fixed; z-index:70; left:var(--frame); top:var(--frame);
-    width:var(--bar); height:var(--bar); display:flex; align-items:center; justify-content:center;
-    border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--bg);
+  /* ============ NAV ============ */
+  .nav{
+    position:fixed; z-index:70;
+    top:calc(var(--frame) + 1px); left:calc(var(--frame) + 1px); right:calc(var(--frame) + 1px);
+    height:calc(var(--bar) - 1px);
+    display:flex; align-items:stretch; justify-content:space-between; background:var(--bg);
   }
-  .logo svg{ width:34px; height:34px; }
-  .join{
-    position:fixed; z-index:70; right:calc(var(--frame) + 14px); top:calc(var(--frame) + 14px);
-    background:var(--ink); color:#000; font-family:var(--body); font-weight:500; font-size:15px;
-    padding:11px 20px; border:0; transition:transform .25s var(--ease), background .25s var(--ease), color .25s var(--ease);
+  .nav__brand{ display:flex; align-items:center; gap:16px; }
+  .nav__mark{ width:var(--bar); height:100%; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--line); flex:none; }
+  .nav__mark svg{ width:34px; height:34px; }
+  .nav__name{ font-family:var(--pixel); font-weight:500; font-size:clamp(17px,1.8vw,22px); letter-spacing:.01em; }
+  .nav__links{ display:flex; align-items:center; gap:clamp(18px,2.4vw,40px); padding-right:clamp(8px,1.5vw,22px); }
+  .nav__links a{ font-family:var(--body); font-weight:500; font-size:14.5px; color:var(--dim); position:relative; padding:6px 0; transition:color .3s var(--ease); }
+  .nav__links a::after{ content:""; position:absolute; left:0; bottom:0; height:1px; width:100%; background:var(--ink); transform:scaleX(0); transform-origin:right; transition:transform .35s var(--ease); }
+  .nav__links a:hover{ color:var(--ink); }
+  .nav__links a:hover::after{ transform:scaleX(1); transform-origin:left; }
+  @media(max-width:600px){
+    .nav__name{ display:none; }
+    .nav__links{ gap:16px; }
+    .nav__links a:nth-child(3){ display:none; }
+    .nav__links a{ font-size:13px; }
   }
-  .join:hover{ background:#d6d6d6; }
-  .join:active{ transform:scale(.97); }
-  @media(max-width:560px){ .join{ font-size:13px; padding:9px 14px; } .logo svg{ width:26px; height:26px; } }
 
   /* ============ LAYOUT SHELL ============ */
-  .shell{ position:relative; z-index:5; padding:var(--frame); }
+  .shell{ position:relative; z-index:5; padding:var(--frame); padding-top:calc(var(--frame) + var(--bar)); }
   .panel{ position:relative; border-bottom:1px solid var(--line); }
-  .split{ display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - 2*var(--frame)); }
-  @media(max-width:820px){ .split{ grid-template-columns:1fr; min-height:0; } }
+  .split{ display:grid; grid-template-columns:1fr 1fr; }
+  .split--tall{ min-height:calc(100vh - var(--frame) - var(--bar)); }
+  @media(max-width:820px){ .split{ grid-template-columns:1fr; } .split--tall{ min-height:0; } }
 
-  .cell{ position:relative; padding:clamp(26px,3.4vw,52px); display:flex; flex-direction:column; }
-  .cell--art{ padding:0; overflow:hidden; background:#000; }
+  .cell{ position:relative; padding:clamp(28px,3.4vw,56px); display:flex; flex-direction:column; }
+  .cell--center{ justify-content:center; }
+  .cell--art{ padding:0; overflow:hidden; background:#000; min-height:46vh; }
   .cell + .cell{ border-left:1px solid var(--line); }
-  @media(max-width:820px){ .cell + .cell{ border-left:0; border-top:1px solid var(--line); } .cell--art{ min-height:62vh; } }
+  @media(max-width:820px){ .cell + .cell{ border-left:0; border-top:1px solid var(--line); } .cell--art{ min-height:60vh; order:2; } }
 
-  /* ASCII canvas fills its cell */
   .art{ position:absolute; inset:0; width:100%; height:100%; }
 
-  /* ============ HERO TOP BAR ============ */
-  .hero{ }
-  .topbar{ height:var(--bar); display:flex; align-items:center; padding-left:calc(var(--bar) + clamp(18px,2.2vw,34px)); padding-right:200px; border-bottom:1px solid var(--line); }
-  .topbar h1{
-    font-family:var(--pixel); font-weight:500; font-size:clamp(24px,3.5vw,50px); line-height:1;
-    letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  /* ============ HERO ============ */
+  .hero__title{
+    font-family:var(--pixel); font-weight:500; font-size:clamp(30px,3.9vw,60px);
+    line-height:1.08; letter-spacing:.005em; max-width:18ch;
   }
-  @media(max-width:820px){ .topbar{ height:auto; min-height:var(--bar); padding:18px 84px 18px calc(var(--bar) + 14px); } .topbar h1{ white-space:normal; font-size:clamp(20px,6.6vw,34px); } }
+  .hero__title .setup{ color:var(--dim); }
+  .hero__sub{ margin-top:clamp(22px,2.6vw,34px); max-width:46ch; color:var(--dim); font-size:clamp(16px,1.45vw,19px); line-height:1.62; }
+  .hero__sub b{ color:var(--ink); font-weight:600; }
+  .hero__meta{ display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:clamp(28px,3vw,42px); }
+  .hero__meta span{ font-family:var(--term); font-size:16px; letter-spacing:.04em; color:var(--faint); display:flex; align-items:center; gap:9px; }
+  .hero__meta i{ width:6px; height:6px; background:var(--ink); display:inline-block; flex:none; }
 
   /* ============ TEXT BLOCKS ============ */
   .lede{ font-size:clamp(17px,1.5vw,21px); line-height:1.62; color:var(--dim); max-width:42ch; }
   .lede b{ color:var(--ink); font-weight:600; }
   .inset{
-    margin-top:auto; padding:clamp(22px,2.4vw,34px); background:
-      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+    padding:clamp(24px,2.6vw,36px);
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
     border:1px solid var(--line-soft);
-    font-size:clamp(16px,1.45vw,20px); line-height:1.6; color:var(--dim); max-width:50ch;
+    font-size:clamp(16px,1.5vw,20px); line-height:1.6; color:var(--dim); max-width:48ch;
   }
   .inset b{ color:var(--ink); font-weight:600; }
-  .tag{ margin-top:clamp(26px,3vw,42px); }
+  .tag{ margin-top:auto; padding-top:clamp(28px,3vw,46px); }
   .tag__k{ font-family:var(--pixel); font-weight:500; font-size:clamp(15px,1.5vw,19px); letter-spacing:.02em; }
   .tag__d{ margin-top:8px; font-size:14px; color:var(--faint); }
 
@@ -124,14 +132,10 @@
   .bullets li::before{ content:""; position:absolute; left:2px; top:.62em; width:6px; height:6px; background:var(--ink); }
   .bullets b{ color:var(--ink); font-weight:600; }
 
-  /* spacer so content clears the fixed top bar on the very first cell */
-  .hero .cell--text{ padding-top:clamp(36px,5vw,72px); }
-
   /* ============ EVIDENCE ============ */
-  .ev{ padding:0; }
   .ev__head{ padding:clamp(24px,3vw,40px) var(--gut) 0; }
   .ev__k{ font-family:var(--pixel); font-weight:500; font-size:clamp(16px,1.6vw,20px); }
-  .ev__sub{ margin-top:8px; color:var(--faint); font-size:13.5px; font-family:var(--term); letter-spacing:.04em; }
+  .ev__sub{ margin-top:8px; color:var(--faint); font-size:15px; font-family:var(--term); letter-spacing:.04em; }
   .ev__row{ display:grid; grid-template-columns:repeat(2,1fr); margin-top:clamp(24px,3vw,40px); }
   @media(min-width:820px){ .ev__row{ grid-template-columns:repeat(4,1fr); } }
   .ev__cell{ padding:clamp(26px,3vw,44px) var(--gut); border-top:1px solid var(--line); }
@@ -139,21 +143,50 @@
   @media(max-width:820px){ .ev__cell:nth-child(odd){ border-left:0; } .ev__cell:nth-child(even){ border-left:1px solid var(--line); } }
   .ev__num{ font-family:var(--pixel); font-weight:600; font-size:clamp(40px,5.2vw,68px); line-height:.9; }
   .ev__num small{ font-family:var(--term); font-size:.32em; color:var(--dim); margin-left:.2em; }
-  .ev__cap{ margin-top:14px; font-family:var(--term); font-size:15px; letter-spacing:.04em; color:var(--faint); text-transform:uppercase; line-height:1.4; }
+  .ev__cap{ margin-top:14px; font-family:var(--term); font-size:16px; letter-spacing:.04em; color:var(--faint); text-transform:uppercase; line-height:1.4; }
   .ev__note{ padding:clamp(22px,2.6vw,36px) var(--gut) clamp(30px,3.4vw,48px); color:var(--faint); font-size:14px; max-width:70ch; line-height:1.7; border-top:1px solid var(--line-soft); margin-top:clamp(24px,3vw,40px); }
   .ev__note b{ color:var(--ink); font-weight:500; }
 
   /* ============ CLOSING ============ */
-  .close{ min-height:74vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--gut); }
+  .close{ min-height:70vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--gut); }
   .close__line{ font-family:var(--pixel); font-weight:500; font-size:clamp(26px,4.2vw,56px); line-height:1.12; max-width:16ch; }
   .close__line span{ color:var(--faint); }
   .cta{ margin-top:clamp(34px,4vw,52px); background:var(--ink); color:#000; font-weight:500; font-size:16px; padding:14px 26px; transition:background .25s var(--ease), transform .25s var(--ease); }
   .cta:hover{ background:#d6d6d6; } .cta:active{ transform:scale(.97); }
 
   /* ============ FOOTER ============ */
-  .foot{ display:flex; flex-wrap:wrap; gap:14px 32px; align-items:center; justify-content:space-between; padding:26px var(--gut); border-bottom:0; }
-  .foot__note{ font-family:var(--term); font-size:15px; letter-spacing:.04em; color:var(--faint); }
-  .foot__note .demo{ color:#fff; }
+  .foot{ border-bottom:0; }
+  .foot__top{ display:grid; grid-template-columns:1.5fr 1fr 1fr; }
+  @media(max-width:820px){ .foot__top{ grid-template-columns:1fr; } }
+  .foot__cell{ padding:clamp(30px,3.4vw,52px) var(--gut); border-top:1px solid var(--line); }
+  .foot__cell + .foot__cell{ border-left:1px solid var(--line); }
+  @media(max-width:820px){ .foot__cell + .foot__cell{ border-left:0; } }
+  .foot__mark{ width:36px; height:36px; }
+  .foot__mark svg{ width:100%; height:100%; }
+  .foot__name{ font-family:var(--pixel); font-weight:500; font-size:clamp(26px,3vw,40px); line-height:1; margin-top:18px; }
+  .foot__tagline{ margin-top:14px; color:var(--faint); font-size:15px; max-width:34ch; line-height:1.6; }
+  .foot__col h4{ font-family:var(--pixel); font-weight:500; font-size:16px; letter-spacing:.03em; color:var(--ink); margin-bottom:14px; }
+  .foot__col a{ display:block; color:var(--dim); font-size:15.5px; padding:7px 0; width:fit-content; transition:color .25s var(--ease), transform .25s var(--ease); }
+  .foot__col a:hover{ color:#fff; transform:translateX(5px); }
+  .foot__bar{ display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; justify-content:space-between; padding:20px var(--gut); border-top:1px solid var(--line); }
+  .foot__bar span{ font-family:var(--term); font-size:16px; letter-spacing:.04em; color:var(--faint); }
+  .foot__bar .demo{ color:#fff; font-weight:400; }
+
+  /* ============ WHY NOW ============ */
+  .why{ }
+  .why__wrap{ max-width:1000px; margin:0 auto; padding:clamp(80px,13vh,170px) var(--gut); text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .why__label{ font-family:var(--term); font-size:17px; letter-spacing:.22em; text-transform:uppercase; color:var(--faint); margin-bottom:clamp(26px,3.4vw,44px); }
+  .why__head{ font-family:var(--pixel); font-weight:500; font-size:clamp(28px,4.4vw,62px); line-height:1.08; letter-spacing:.005em; max-width:20ch; }
+  .why__head .accent{ color:var(--dim); }
+  .why__body{ margin-top:clamp(34px,4.4vw,56px); max-width:62ch; }
+  .why__body p{ color:var(--dim); font-size:clamp(16px,1.5vw,20px); line-height:1.66; }
+  .why__body p + p{ margin-top:1.3em; }
+  .why__body b{ color:var(--ink); font-weight:600; }
+  .why__punch{
+    margin-top:clamp(46px,6vw,82px); font-family:var(--pixel); font-weight:500;
+    font-size:clamp(22px,3vw,40px); line-height:1.18; max-width:24ch; color:var(--ink);
+  }
+  .why__punch span{ color:var(--faint); }
 
   /* reveals */
   .reveal{ opacity:0; transform:translateY(20px); transition:opacity 1s var(--ease), transform 1s var(--ease); }
@@ -163,7 +196,7 @@
 </head>
 <body>
 
-<!-- ===== fixed grid + corners ===== -->
+<!-- ===== fixed grid ===== -->
 <div class="grid" aria-hidden="true">
   <div class="grid__frame"></div>
   <div class="grid__v"></div>
@@ -173,28 +206,37 @@
   <span class="tick ct"></span>
 </div>
 
-<a class="logo" href="#top" aria-label="Harbinger home">
-  <svg viewBox="0 0 100 100" aria-hidden="true">
-    <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
-    <circle cx="86" cy="28" r="6" fill="#fff"/>
-  </svg>
-</a>
-<a class="join" href="mailto:research@harbinger.dev">Join the team</a>
+<!-- ===== nav ===== -->
+<nav class="nav">
+  <a class="nav__brand" href="#top" aria-label="Harbinger Labs home">
+    <span class="nav__mark">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="86" cy="28" r="6" fill="#fff"/>
+      </svg>
+    </span>
+    <span class="nav__name">Harbinger Labs</span>
+  </a>
+  <div class="nav__links">
+    <a href="#approach">Approach</a>
+    <a href="#research">Research</a>
+    <a href="#evidence">Evidence</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
 
 <main class="shell" id="top">
 
-  <!-- ============ HERO PANEL ============ -->
+  <!-- ============ HERO ============ -->
   <section class="panel hero">
-    <div class="topbar"><h1>Predictive defense for the real network.</h1></div>
-    <div class="split">
-      <div class="cell cell--text">
-        <p class="lede reveal">Security models are trained on the written record — logs, signatures, the alerts of attacks already survived. But defense far exceeds the past. It is earned in the live cycle of intent, action, and consequence across networks no model has seen.</p>
-        <div class="inset reveal">
-          Truly defended networks must move from <b>records to worlds</b> — and acquire the capacity to perceive, anticipate, and improvise. They need a <b>world model of the intrusion.</b>
-        </div>
-        <div class="tag reveal">
-          <div class="tag__k">FORESIGHT, NOT FORENSICS</div>
-          <div class="tag__d">On reachability, privilege, and blind spots</div>
+    <div class="split split--tall">
+      <div class="cell cell--text cell--center">
+        <h1 class="hero__title"><span class="setup">Security trained on the past can only see the past.</span> We build models that foresee the breach.</h1>
+        <p class="hero__sub"><b>Harbinger Labs builds world models for cybersecurity.</b> Scry learns a network as a place it can simulate forward — and ranks how an intrusion will move through it, and where your sensors go blind, before the breach happens.</p>
+        <div class="hero__meta">
+          <span><i></i>world models</span>
+          <span><i></i>sim-to-real validation</span>
+          <span><i></i>agent certification</span>
         </div>
       </div>
       <div class="cell cell--art">
@@ -203,19 +245,50 @@
     </div>
   </section>
 
-  <!-- ============ FRONTIER PANEL ============ -->
-  <section class="panel">
+  <!-- ============ WHY NOW ============ -->
+  <section class="panel why" id="why">
+    <div class="why__wrap">
+      <p class="why__label reveal">The new threat model</p>
+      <h2 class="why__head reveal">As models learn to reason, <span class="accent">so does the intrusion.</span></h2>
+      <div class="why__body reveal">
+        <p>The same intelligence that writes our software now writes the attack. A new class of adversary probes, pivots, and escalates at machine speed — tireless, improvising, and run at scale for the cost of compute.</p>
+        <p>The threat is no longer the exploit you have already catalogued. It is <b>everything a capable agent can reason its way toward</b> — and that frontier widens with every model release. Defense built on yesterday's signatures was made for a slower world.</p>
+      </div>
+      <p class="why__punch reveal">The only answer to an attacker that learns <span>is a defender that foresees.</span></p>
+    </div>
+  </section>
+
+  <!-- ============ APPROACH / THESIS ============ -->
+  <section class="panel" id="approach">
+    <div class="split">
+      <div class="cell cell--text">
+        <p class="lede reveal">Security models are trained on the written record — logs, signatures, the alerts of attacks already survived. But defense far exceeds the past. It is earned in the live cycle of intent, action, and consequence across networks no model has seen.</p>
+        <div class="tag reveal">
+          <div class="tag__k">FORESIGHT, NOT FORENSICS</div>
+          <div class="tag__d">On reachability, privilege, and blind spots</div>
+        </div>
+      </div>
+      <div class="cell cell--text cell--center">
+        <div class="inset reveal">
+          Truly defended networks must move from <b>records to worlds</b> — and acquire the capacity to perceive, anticipate, and improvise. They need a <b>world model of the intrusion.</b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESEARCH / FRONTIER ============ -->
+  <section class="panel" id="research">
     <div class="split">
       <div class="cell cell--art">
-        <canvas class="art" id="art-city" data-motif="city" aria-label="Animated ASCII rendering of a network rendered as a city of hosts."></canvas>
+        <canvas class="art" id="art-city" data-motif="city" aria-label="Animated ASCII rendering of a network as a city of hosts."></canvas>
       </div>
-      <div class="cell cell--text">
+      <div class="cell cell--text cell--center">
         <h2 class="head reveal">Trained on networks no one has seen.</h2>
         <div class="body gap-lg">
           <p class="reveal">Scry learns from procedurally generated networks across countless topologies. That diversity yields defense that <b>generalizes</b> to environments it was never shown.</p>
           <p class="reveal">It builds on a learned simulator of lateral movement — every rollout a unique, ranked future of the same intrusion, graded against attacks that actually fired on real hosts.</p>
         </div>
-        <p class="body gap-md reveal" style="color:var(--ink);font-weight:500;">For the past year, we've been pushing the frontier across:</p>
+        <p class="body gap-md reveal" style="color:var(--ink);font-weight:500;">We push the frontier across:</p>
         <ul class="bullets reveal">
           <li><b>Attack-path models</b> that rank where an intrusion moves next</li>
           <li><b>World models</b> that predict the outcome of each move</li>
@@ -225,8 +298,8 @@
     </div>
   </section>
 
-  <!-- ============ EVIDENCE PANEL ============ -->
-  <section class="panel ev">
+  <!-- ============ EVIDENCE ============ -->
+  <section class="panel" id="evidence">
     <div class="ev__head reveal">
       <div class="ev__k">Held against the real thing.</div>
       <div class="ev__sub">rank correlation vs. executed attacks · internal validation</div>
@@ -240,19 +313,44 @@
     <p class="ev__note reveal">Detection signal is <b>real rule-firing on live telemetry</b>, not a synthetic proxy. Deep multi-host posture ranking remains an open frontier — we report it where it is weak, and we do not auto-clear what we cannot verify.</p>
   </section>
 
-  <!-- ============ CLOSING PANEL ============ -->
-  <section class="panel">
+  <!-- ============ CLOSING / CONTACT ============ -->
+  <section class="panel" id="contact">
     <div class="close">
       <p class="close__line reveal">Every breach was once <span>only a possibility.</span> We study the possibility.</p>
-      <a class="cta reveal" href="mailto:research@harbinger.dev">Request access to Scry →</a>
+      <a class="cta reveal" href="mailto:research@harbinger.dev?subject=Access%20to%20Scry">Request access to Scry →</a>
     </div>
   </section>
 
   <!-- ============ FOOTER ============ -->
-  <footer class="panel" style="border-bottom:0;">
-    <div class="foot">
-      <span class="foot__note">HARBINGER · predictive security research · <span class="demo">demo build</span></span>
-      <span class="foot__note">天 · foresight</span>
+  <footer class="panel foot">
+    <div class="foot__top">
+      <div class="foot__cell">
+        <div class="foot__mark">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+            <circle cx="86" cy="28" r="6" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="foot__name">Harbinger Labs</div>
+        <p class="foot__tagline">World models for cybersecurity. We study the breach before it happens.</p>
+      </div>
+      <div class="foot__cell foot__col">
+        <h4>Navigate</h4>
+        <a href="#approach">Approach</a>
+        <a href="#research">Research</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="foot__cell foot__col">
+        <h4>Connect</h4>
+        <a href="mailto:research@harbinger.dev?subject=Access%20to%20Scry">Request access</a>
+        <a href="mailto:research@harbinger.dev?subject=Working%20at%20Harbinger%20Labs">Work with us</a>
+        <a href="mailto:research@harbinger.dev">research@harbinger.dev</a>
+      </div>
+    </div>
+    <div class="foot__bar">
+      <span>© 2026 Harbinger Labs · predictive security research · <b class="demo">demo build</b></span>
+      <span>天 · foresight</span>
     </div>
   </footer>
 
@@ -268,10 +366,9 @@
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
   /* ================================================================
-     GENERATIVE ASCII ART
-     A flow field with an embedded motif (a scrying orb, or a city of
-     hosts) rendered as colored monospace characters on canvas — the
-     same idea as image-to-ASCII, but procedural and alive.
+     GENERATIVE ASCII ART — a flow field with an embedded motif (a
+     scrying orb, or a city of hosts) rendered as colored monospace
+     characters on canvas. Procedural image-to-ASCII, alive.
      ================================================================ */
   function makeAscii(canvas){
     const ctx = canvas.getContext('2d', { alpha:false });
@@ -280,13 +377,11 @@
     const RAMP = " .,:;~-=+*ilI!?[]{}<>1ICZ#%8@";
     const L = RAMP.length - 1;
 
-    // palettes [r,g,b]
     const P = motif==='orb'
-      ? { base:[26,72,40], hi:[150,255,180], accent:[150,110,235] }     // green w/ violet sparks
-      : { base:[40,58,96], hi:[170,200,255], accent:[255,150,60] };     // blue w/ amber windows
+      ? { base:[26,72,40], hi:[150,255,180], accent:[150,110,235] }
+      : { base:[40,58,96], hi:[170,200,255], accent:[255,150,60] };
 
     let W=0,H=0,cols=0,rows=0,cw=9,ch=11;
-    // seeded building skyline for the city motif
     let _s=20260626; const rnd=()=>{ _s=(_s*1103515245+12345)&0x7fffffff; return _s/0x7fffffff; };
     const SKY=[]; for(let i=0;i<40;i++) SKY.push(0.30+rnd()*0.62);
 
@@ -301,19 +396,23 @@
     resize(); window.addEventListener('resize', resize);
 
     function fields(nx,ny,t){
-      // layered flow
       let v = 0.5 + 0.5*Math.sin(nx*7.0 + t*0.7)*Math.cos(ny*5.2 - t*0.5);
       v = 0.40*v + 0.22*(0.5+0.5*Math.sin((nx*1.5+ny)*8.0 - t*0.9));
       let acc = 0;
       if(motif==='orb'){
-        const dx=nx-0.5, dy=(ny-0.46)*1.12, d=Math.hypot(dx,dy);
-        v += 0.85*Math.exp(-Math.pow((d-0.30)/0.045,2));       // glowing iris ring
-        v += 0.70*Math.exp(-Math.pow(d/0.075,2));              // bright pupil glow
-        if(d<0.028) v -= 0.6;                                  // dark pupil
-        v += 0.22*Math.exp(-Math.pow((ny-(0.46+0.30*Math.sin(t*0.5)))/0.018,2)); // scan sweep
-        // radial node spokes
-        v += 0.15*Math.max(0, Math.cos(Math.atan2(dy,dx)*8 - t)) * Math.exp(-Math.pow((d-0.30)/0.12,2));
-        if(d>0.27 && d<0.33){ const a=Math.sin((nx*53.1+ny*97.7))*43758.5; if(a-Math.floor(a)>0.94) acc=0.9; }
+        // the orb drifts slowly, breathes, and radiates an expanding halo
+        const cxo=0.5 + 0.013*Math.sin(t*0.37), cyo=0.46 + 0.016*Math.cos(t*0.31);
+        const dx=nx-cxo, dy=(ny-cyo)*1.12, d=Math.hypot(dx,dy), ang=Math.atan2(dy,dx);
+        const pulse=0.5+0.5*Math.sin(t*0.9);
+        const ringR=0.285 + 0.022*Math.sin(t*0.8);                                   // breathing ring
+        v += (0.62+0.5*pulse)*Math.exp(-Math.pow((d-ringR)/0.045,2));                // glowing, pulsing iris ring
+        v += 0.72*Math.exp(-Math.pow(d/0.072,2));                                     // bright pupil glow
+        if(d<0.026) v -= 0.6;                                                         // dark pupil
+        const halo=(t*0.11)%0.5;                                                      // expanding halo wave
+        v += 0.55*Math.exp(-Math.pow((d-(ringR+halo))/0.022,2))*(1-halo/0.5);
+        v += 0.16*Math.max(0, Math.cos(ang*8 - t*1.2))*Math.exp(-Math.pow((d-ringR)/0.12,2)); // rotating spokes
+        v += 0.20*Math.exp(-Math.pow((ny-(cyo+0.30*Math.sin(t*0.5)))/0.018,2));       // scan sweep
+        if(d>ringR-0.03 && d<ringR+0.03){ const a=Math.sin((nx*53.1+ny*97.7+t))*43758.5; if(a-Math.floor(a)>0.91) acc=0.92; }
       } else {
         const hz=0.40;
         if(ny>hz){
@@ -322,9 +421,9 @@
           if(ny>top){
             v += 0.55;
             const win=((Math.floor(nx*cols)*7 + Math.floor(ny*rows)*13 + b*5))%11;
-            if(win===0){ acc=0.55+0.45*Math.sin(t*1.8+b); }      // lit windows, amber
+            if(win===0){ acc=0.55+0.45*Math.sin(t*1.8+b); }
           } else { v*=0.42; }
-        } else { v*=0.5 + 0.5*Math.exp(-Math.pow((ny-0.16)/0.2,2)); } // sky glow
+        } else { v*=0.5 + 0.5*Math.exp(-Math.pow((ny-0.16)/0.2,2)); }
       }
       return { v:Math.max(0,Math.min(1,v)), acc:Math.max(0,acc) };
     }
@@ -350,7 +449,7 @@
     let raf=null, last=0, t0=0, running=false;
     function loop(now){
       if(!running) return;
-      if(now-last>62){ last=now; t0+=0.05; drawFrame(t0); }   // ~16fps
+      if(now-last>62){ last=now; t0+=0.05; drawFrame(t0); }
       raf=requestAnimationFrame(loop);
     }
     function start(){ if(running||REDUCED) return; running=true; raf=requestAnimationFrame(loop); }
