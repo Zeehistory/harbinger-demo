@@ -37,6 +37,9 @@
   .back{position:fixed;top:calc(var(--frame) + 18px);left:calc(var(--frame) + 24px);z-index:3;
     font-family:var(--term);font-size:18px;letter-spacing:.06em;color:var(--dim);transition:color .3s var(--ease)}
   .back:hover{color:#fff}
+  .logo{position:fixed;top:calc(var(--frame) + 14px);right:calc(var(--frame) + 24px);z-index:3;display:block;transition:opacity .3s var(--ease)}
+  .logo svg{width:30px;height:30px;display:block}
+  .logo:hover{opacity:.7}
 
   .wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
     max-width:480px;margin:0 auto;padding:120px 28px 90px}
@@ -78,6 +81,12 @@
 </div>
 
 <a class="back" href="index.html">← Harbinger</a>
+<a class="logo" href="index.html" aria-label="Harbinger home">
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="86" cy="28" r="6" fill="#fff"/>
+  </svg>
+</a>
 
 <main class="wrap">
   <p class="eyebrow">Request access</p>
