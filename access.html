@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Request access · Harbinger Labs</title>
+<meta name="description" content="Request access to Scry — Harbinger Labs' world model for cybersecurity." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600&family=Inter:wght@400;500;600&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#000; --ink:#fff; --ink-2:#C9CACE; --dim:#A6A7AC; --faint:#6C6C6E;
+    --line:rgba(255,255,255,.22); --line-soft:rgba(255,255,255,.10);
+    --pixel:'Pixelify Sans',monospace; --body:'Inter',system-ui,sans-serif; --term:'VT323',monospace;
+    --ease:cubic-bezier(.22,.61,.36,1); --frame:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:400;line-height:1.6;
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:#fff;color:#000}
+
+  /* architectural frame */
+  .grid{position:fixed;inset:0;z-index:1;pointer-events:none}
+  .grid__frame{position:absolute;inset:var(--frame);border:1px solid var(--line)}
+  .tick{position:absolute;width:11px;height:11px}
+  .tick::before,.tick::after{content:"";position:absolute;background:var(--line)}
+  .tick::before{left:50%;top:0;bottom:0;width:1px;transform:translateX(-.5px)}
+  .tick::after{top:50%;left:0;right:0;height:1px;transform:translateY(-.5px)}
+  .tick.tl{left:calc(var(--frame) - 5px);top:calc(var(--frame) - 5px)}
+  .tick.tr{right:calc(var(--frame) - 5px);top:calc(var(--frame) - 5px)}
+  .tick.bl{left:calc(var(--frame) - 5px);bottom:calc(var(--frame) - 5px)}
+  .tick.br{right:calc(var(--frame) - 5px);bottom:calc(var(--frame) - 5px)}
+
+  .back{position:fixed;top:calc(var(--frame) + 18px);left:calc(var(--frame) + 24px);z-index:3;
+    font-family:var(--term);font-size:18px;letter-spacing:.06em;color:var(--dim);transition:color .3s var(--ease)}
+  .back:hover{color:#fff}
+
+  .wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    max-width:480px;margin:0 auto;padding:120px 28px 90px}
+  .eyebrow{font-family:var(--term);font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:20px}
+  .title{font-family:var(--pixel);font-weight:500;font-size:clamp(34px,7vw,52px);line-height:1.06;letter-spacing:.01em}
+  .sub{margin-top:20px;color:var(--dim);font-size:16.5px;line-height:1.62;max-width:42ch}
+
+  /* vertical form */
+  .form{margin-top:clamp(40px,7vw,60px);display:flex;flex-direction:column;gap:clamp(24px,4vw,32px)}
+  .field{display:flex;flex-direction:column;gap:10px}
+  .field span{font-family:var(--term);font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .field input,.field textarea{background:transparent;border:0;border-bottom:1px solid var(--line);color:#fff;
+    font-family:var(--body);font-size:17px;padding:9px 2px;transition:border-color .3s var(--ease);resize:none}
+  .field input:focus,.field textarea:focus{outline:none;border-color:#fff}
+  .field input.bad,.field textarea.bad{border-color:#E2685F}
+  .submit{margin-top:14px;align-self:flex-start;display:inline-flex;align-items:center;gap:12px;background:none;border:0;
+    cursor:pointer;color:#fff;font-family:var(--term);font-size:22px;letter-spacing:.12em;text-transform:uppercase;
+    padding:6px 1px;position:relative}
+  .submit::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;background:#fff;transform:scaleX(0);
+    transform-origin:right;transition:transform .35s var(--ease)}
+  .submit:hover::after{transform:scaleX(1);transform-origin:left}
+  .arr{transition:transform .35s var(--ease);display:inline-block}
+  .submit:hover .arr{transform:translateX(8px)}
+
+  .done__k{font-family:var(--pixel);font-weight:500;font-size:clamp(26px,5vw,38px);color:#fff;
+    text-shadow:0 0 24px rgba(255,255,255,.30)}
+  .done__d{margin-top:18px;color:var(--dim);font-size:16.5px;line-height:1.62}
+  .done__d a{color:#fff;border-bottom:1px solid var(--line);padding-bottom:1px}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.001s!important}}
+</style>
+</head>
+<body>
+
+<div class="grid" aria-hidden="true">
+  <div class="grid__frame"></div>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+</div>
+
+<a class="back" href="index.html">← Harbinger</a>
+
+<main class="wrap">
+  <p class="eyebrow">Request access</p>
+  <h1 class="title">Access to Scry.</h1>
+  <p class="sub">Tell us what you're defending. We read every request and reply within a few days.</p>
+
+  <form class="form" id="accessForm" novalidate>
+    <label class="field"><span>Name</span><input name="name" type="text" autocomplete="name" required></label>
+    <label class="field"><span>Work email</span><input name="email" type="email" autocomplete="email" required></label>
+    <label class="field"><span>Organization</span><input name="org" type="text" autocomplete="organization"></label>
+    <label class="field"><span>What are you defending?</span><textarea name="use" rows="3"></textarea></label>
+    <button class="submit" type="submit"><span>Request access</span><span class="arr">→</span></button>
+  </form>
+
+  <div class="done" id="done" hidden>
+    <p class="done__k">Request received.</p>
+    <p class="done__d">We'll reach you at the address you gave. <a href="index.html">Back to home →</a></p>
+  </div>
+</main>
+
+<script>
+  (function(){
+    const f=document.getElementById('accessForm'); if(!f) return;
+    const ok=v=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+    f.addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=f.name.value.trim(), email=f.email.value.trim();
+      f.name.classList.toggle('bad',!name);
+      f.email.classList.toggle('bad',!ok(email));
+      if(!name||!ok(email)) return;
+      f.hidden=true; document.getElementById('done').hidden=false;
+    });
+    [f.name,f.email].forEach(i=>i.addEventListener('input',()=>i.classList.remove('bad')));
+  })();
+</script>
+</body>
+</html>

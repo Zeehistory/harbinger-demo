@@ -86,6 +86,7 @@
   /* ============ LAYOUT SHELL ============ */
   .shell{ position:relative; z-index:5; padding:var(--frame); padding-top:calc(var(--frame) + var(--bar)); }
   .panel{ position:relative; border-bottom:1px solid var(--line); }
+  .spacer{ height:clamp(64px,12vh,150px); border-bottom:1px solid var(--line); }
   .split{ display:grid; grid-template-columns:1fr 1fr; }
   .split--tall{ min-height:calc(100vh - var(--frame) - var(--bar)); }
   @media(max-width:820px){ .split{ grid-template-columns:1fr; } .split--tall{ min-height:0; } }
@@ -285,6 +286,8 @@
     </div>
   </section>
 
+  <div class="spacer"></div>
+
   <!-- ============ WHY NOW ============ -->
   <section class="panel why" id="why">
     <div class="why__wrap">
@@ -297,6 +300,8 @@
       <p class="why__punch reveal">The only answer to an attacker that learns <span>is a defender that foresees.</span></p>
     </div>
   </section>
+
+  <div class="spacer"></div>
 
   <!-- ============ APPROACH / THESIS ============ -->
   <section class="panel" id="approach">
@@ -315,6 +320,8 @@
       </div>
     </div>
   </section>
+
+  <div class="spacer"></div>
 
   <!-- ============ FRONTIER ============ -->
   <section class="panel" id="frontier">
@@ -338,6 +345,8 @@
     </div>
   </section>
 
+  <div class="spacer"></div>
+
   <!-- ============ RESEARCH / FIELD NOTES ============ -->
   <section class="panel" id="research">
     <div class="ev__head reveal">
@@ -357,6 +366,8 @@
     </div>
   </section>
 
+  <div class="spacer"></div>
+
   <!-- ============ EVIDENCE ============ -->
   <section class="panel" id="evidence">
     <div class="ev__head reveal">
@@ -372,20 +383,13 @@
     <p class="ev__note reveal">Detection signal is <b>real rule-firing on live telemetry</b>, not a synthetic proxy. Deep multi-host posture ranking remains an open frontier — we report it where it is weak, and we do not auto-clear what we cannot verify.</p>
   </section>
 
+  <div class="spacer"></div>
+
   <!-- ============ CLOSING / CONTACT ============ -->
   <section class="panel" id="contact">
-    <div class="contact">
+    <div class="close">
       <p class="close__line reveal"><span>Every breach was once only a possibility.</span> <b>We study the possibility.</b></p>
-      <form class="form reveal" id="accessForm" novalidate>
-        <div class="form__grid">
-          <label class="field"><span>Name</span><input name="name" type="text" autocomplete="name" required></label>
-          <label class="field"><span>Work email</span><input name="email" type="email" autocomplete="email" required></label>
-          <label class="field"><span>Organization</span><input name="org" type="text" autocomplete="organization"></label>
-          <label class="field"><span>What are you defending?</span><input name="use" type="text"></label>
-        </div>
-        <button class="link-btn" type="submit"><span class="link-btn__t">Request access</span><span class="link-btn__arr">→</span></button>
-      </form>
-      <p class="form__done" id="formDone" hidden>Request received. We'll reach you at the address you gave.</p>
+      <a class="link-btn reveal" href="access.html"><span class="link-btn__t">Request access</span><span class="link-btn__arr">→</span></a>
     </div>
   </section>
 
@@ -451,13 +455,7 @@
 
     let W=0,H=0,cols=0,rows=0,cw=9,ch=11,AR=1;
     let _s=20260626; const rnd=()=>{ _s=(_s*1103515245+12345)&0x7fffffff; return _s/0x7fffffff; };
-    // network graph (seeded): nodes + nearest-neighbour edges
-    const NODES=[]; for(let i=0;i<11;i++) NODES.push({x:0.10+rnd()*0.80, y:0.10+rnd()*0.80});
-    const EDGES=[];
-    for(let i=0;i<NODES.length;i++){
-      const near=NODES.map((n,j)=>({j,d:(n.x-NODES[i].x)**2+(n.y-NODES[i].y)**2})).filter(o=>o.j!==i).sort((a,b)=>a.d-b.d);
-      for(let k=0;k<2;k++){ const j=near[k].j; if(!EDGES.some(e=>e.a===j&&e.b===i)) EDGES.push({a:i,b:j,phase:rnd()}); }
-    }
+    const SKY=[]; for(let i=0;i<40;i++) SKY.push(0.30+rnd()*0.62);
 
     function resize(){
       const r=canvas.getBoundingClientRect(); W=Math.max(40,r.width); H=Math.max(40,r.height);
@@ -488,27 +486,16 @@
         v += 0.20*Math.exp(-Math.pow((ny-(cyo+0.30*Math.sin(t*0.5)))/0.018,2));       // scan sweep
         if(d>ringR-0.03 && d<ringR+0.03){ const a=Math.sin((nx*53.1+ny*97.7+t))*43758.5; if(a-Math.floor(a)>0.91) acc=0.92; }
       } else {
-        // ---- network graph: hosts, links, and packets in flight (pulsing up & down) ----
-        v = 0.08 + 0.10*(0.5+0.5*Math.sin((nx*1.5+ny)*7 - t*0.6));
-        for(let k=0;k<EDGES.length;k++){
-          const A=NODES[EDGES[k].a], B=NODES[EDGES[k].b];
-          const dx=B.x-A.x, dy=B.y-A.y, len2=dx*dx+dy*dy*AR*AR||1e-6;
-          let u=((nx-A.x)*dx+(ny-A.y)*dy*AR*AR)/len2; u=u<0?0:u>1?1:u;
-          const pd=Math.hypot(nx-(A.x+dx*u),(ny-(A.y+dy*u))*AR);
-          if(pd<0.013){
-            const e=1-pd/0.013;
-            if(e*0.30>v) v=e*0.30;
-            const pos=((t*0.22)+EDGES[k].phase)%1;
-            const pk=Math.exp(-Math.pow((u-pos)/0.06,2))*e;   // the packet
-            v += pk*0.85; if(pk>acc) acc=pk;
-          }
-        }
-        for(let i=0;i<NODES.length;i++){
-          const dd=Math.hypot(nx-NODES[i].x,(ny-NODES[i].y)*AR);
-          const pulse=0.6+0.4*Math.sin(t*1.0 + i*0.9);        // host brightness breathes
-          v += Math.exp(-Math.pow(dd/0.019,2))*pulse;
-          v += 0.35*Math.exp(-Math.pow((dd-0.032)/0.011,2))*pulse;
-        }
+        const hz=0.40;
+        if(ny>hz){
+          const b=Math.floor(nx*SKY.length), h=SKY[b%SKY.length];
+          const top=hz+(1-h)*(1-hz)*0.92;
+          if(ny>top){
+            v += 0.55;
+            const win=((Math.floor(nx*cols)*7 + Math.floor(ny*rows)*13 + b*5))%11;
+            if(win===0){ acc=0.55+0.45*Math.sin(t*1.8+b); }
+          } else { v*=0.42; }
+        } else { v*=0.5 + 0.5*Math.exp(-Math.pow((ny-0.16)/0.2,2)); }
       }
       return { v:Math.max(0,Math.min(1,v)), acc:Math.max(0,acc) };
     }
