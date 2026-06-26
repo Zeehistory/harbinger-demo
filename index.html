@@ -3,384 +3,255 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Harbinger — The frontier research lab for predictive defense.</title>
-<meta name="description" content="Harbinger is a frontier research lab building world models for cybersecurity. We teach machines to foresee how an intrusion will move through a network, before it happens." />
+<title>Harbinger — Predictive defense for the real network.</title>
+<meta name="description" content="Harbinger builds world models for cybersecurity. Scry foresees how an intrusion will move through a network, and where your sensors go blind, before it happens." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200;0,6..72,300;0,6..72,400;1,6..72,200;1,6..72,300;1,6..72,400&family=Spline+Sans:wght@300;400;500&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=VT323&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --void:#0B0C0E;        /* deep ink */
-    --void-2:#101216;      /* raised panel */
-    --bone:#ECEAE3;        /* warm off-white */
-    --bone-dim:#C9C7C0;    /* softened text */
-    --ash:#7E828B;         /* muted grey */
-    --ash-deep:#4A4D54;    /* faint grey */
-    --line:rgba(236,234,227,.10);
-    --line-2:rgba(236,234,227,.18);
-    --signal:#63D3C6;      /* cold verdigris — used sparingly */
-    --signal-deep:#2E8C82;
+    --bg:#000;
+    --panel:#0a0a0b;
+    --panel-2:#101011;
+    --ink:#FFFFFF;
+    --dim:#ACACAE;
+    --faint:#6C6C6E;
+    --line:rgba(255,255,255,.24);
+    --line-soft:rgba(255,255,255,.10);
 
-    --display:'Newsreader', Georgia, serif;
-    --body:'Spline Sans', system-ui, sans-serif;
-    --mono:'Spline Sans Mono', ui-monospace, monospace;
+    --pixel:'Pixelify Sans', monospace;
+    --body:'Inter', system-ui, sans-serif;
+    --term:'VT323', monospace;
 
     --ease:cubic-bezier(.22,.61,.36,1);
-    --ease-out-quint:cubic-bezier(.23,1,.32,1);
-    --gut:clamp(22px,6vw,128px);
-    --col:680px;
+    --frame:14px;            /* outer grid inset */
+    --bar:74px;              /* top bar height */
+    --gut:clamp(22px,3.2vw,56px);
   }
 
   *{ box-sizing:border-box; margin:0; padding:0; }
   html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
   body{
-    background:var(--void);
-    color:var(--bone);
-    font-family:var(--body);
-    font-weight:300;
-    line-height:1.72;
-    font-size:17px;
-    -webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility;
+    background:var(--bg); color:var(--ink);
+    font-family:var(--body); font-weight:400; line-height:1.6; font-size:16px;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     overflow-x:hidden;
   }
-  ::selection{ background:var(--signal); color:var(--void); }
   a{ color:inherit; text-decoration:none; }
   canvas{ display:block; }
+  ::selection{ background:#fff; color:#000; }
 
-  /* very faint vignette + grain so the void breathes */
-  body::after{
-    content:""; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.5;
-    background:radial-gradient(120% 80% at 50% -10%, rgba(99,211,198,.05), transparent 55%),
-               radial-gradient(100% 60% at 50% 120%, rgba(0,0,0,.5), transparent 60%);
+  /* ============ FIXED ARCHITECTURAL GRID ============ */
+  .grid{ position:fixed; inset:0; z-index:60; pointer-events:none; }
+  .grid__frame{ position:absolute; inset:var(--frame); border:1px solid var(--line); }
+  .grid__v{ position:absolute; top:var(--frame); bottom:var(--frame); left:50%; width:1px; background:var(--line); }
+  .grid__h{ position:absolute; left:var(--frame); right:var(--frame); top:calc(var(--frame) + var(--bar)); height:1px; background:var(--line); }
+  /* crosshair ticks */
+  .tick{ position:absolute; width:11px; height:11px; }
+  .tick::before,.tick::after{ content:""; position:absolute; background:var(--line); }
+  .tick::before{ left:50%; top:0; bottom:0; width:1px; transform:translateX(-.5px); }
+  .tick::after{ top:50%; left:0; right:0; height:1px; transform:translateY(-.5px); }
+  .tick.tl{ left:calc(var(--frame) - 5px); top:calc(var(--frame) - 5px); }
+  .tick.tr{ right:calc(var(--frame) - 5px); top:calc(var(--frame) - 5px); }
+  .tick.bl{ left:calc(var(--frame) - 5px); bottom:calc(var(--frame) - 5px); }
+  .tick.br{ right:calc(var(--frame) - 5px); bottom:calc(var(--frame) - 5px); }
+  .tick.ct{ left:50%; top:calc(var(--frame) + var(--bar) - 5px); transform:translateX(-50%); }
+  @media(max-width:820px){ .grid__v{ display:none; } .tick.ct{ display:none; } }
+
+  /* ============ FIXED CORNERS: LOGO + JOIN ============ */
+  .logo{
+    position:fixed; z-index:70; left:var(--frame); top:var(--frame);
+    width:var(--bar); height:var(--bar); display:flex; align-items:center; justify-content:center;
+    border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--bg);
   }
-  body::before{
-    content:""; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.03;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  .logo svg{ width:34px; height:34px; }
+  .join{
+    position:fixed; z-index:70; right:calc(var(--frame) + 14px); top:calc(var(--frame) + 14px);
+    background:var(--ink); color:#000; font-family:var(--body); font-weight:500; font-size:15px;
+    padding:11px 20px; border:0; transition:transform .25s var(--ease), background .25s var(--ease), color .25s var(--ease);
   }
+  .join:hover{ background:#d6d6d6; }
+  .join:active{ transform:scale(.97); }
+  @media(max-width:560px){ .join{ font-size:13px; padding:9px 14px; } .logo svg{ width:26px; height:26px; } }
 
-  .wrap{ width:100%; max-width:1180px; margin:0 auto; padding:0 var(--gut); position:relative; z-index:2; }
-  .measure{ max-width:var(--col); margin-left:auto; margin-right:auto; }
+  /* ============ LAYOUT SHELL ============ */
+  .shell{ position:relative; z-index:5; padding:var(--frame); }
+  .panel{ position:relative; border-bottom:1px solid var(--line); }
+  .split{ display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - 2*var(--frame)); }
+  @media(max-width:820px){ .split{ grid-template-columns:1fr; min-height:0; } }
 
-  /* ---------- utility type ---------- */
-  .eyebrow{
-    font-family:var(--mono); font-size:12px; font-weight:400; letter-spacing:.18em;
-    text-transform:uppercase; color:var(--signal);
+  .cell{ position:relative; padding:clamp(26px,3.4vw,52px); display:flex; flex-direction:column; }
+  .cell--art{ padding:0; overflow:hidden; background:#000; }
+  .cell + .cell{ border-left:1px solid var(--line); }
+  @media(max-width:820px){ .cell + .cell{ border-left:0; border-top:1px solid var(--line); } .cell--art{ min-height:62vh; } }
+
+  /* ASCII canvas fills its cell */
+  .art{ position:absolute; inset:0; width:100%; height:100%; }
+
+  /* ============ HERO TOP BAR ============ */
+  .hero{ }
+  .topbar{ height:var(--bar); display:flex; align-items:center; padding-left:calc(var(--bar) + clamp(18px,2.2vw,34px)); padding-right:200px; border-bottom:1px solid var(--line); }
+  .topbar h1{
+    font-family:var(--pixel); font-weight:500; font-size:clamp(24px,3.5vw,50px); line-height:1;
+    letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .eyebrow--mute{ color:var(--ash); }
-  .label{ font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ash); }
+  @media(max-width:820px){ .topbar{ height:auto; min-height:var(--bar); padding:18px 84px 18px calc(var(--bar) + 14px); } .topbar h1{ white-space:normal; font-size:clamp(20px,6.6vw,34px); } }
 
-  /* ---------- nav ---------- */
-  .nav{
-    position:fixed; top:0; left:0; right:0; z-index:50;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:20px var(--gut);
-    transition:background .5s var(--ease), border-color .5s var(--ease), padding .5s var(--ease);
-    border-bottom:1px solid transparent;
+  /* ============ TEXT BLOCKS ============ */
+  .lede{ font-size:clamp(17px,1.5vw,21px); line-height:1.62; color:var(--dim); max-width:42ch; }
+  .lede b{ color:var(--ink); font-weight:600; }
+  .inset{
+    margin-top:auto; padding:clamp(22px,2.4vw,34px); background:
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+    border:1px solid var(--line-soft);
+    font-size:clamp(16px,1.45vw,20px); line-height:1.6; color:var(--dim); max-width:50ch;
   }
-  .nav.scrolled{ background:rgba(11,12,14,.74); backdrop-filter:blur(12px) saturate(120%); border-bottom:1px solid var(--line); padding-top:14px; padding-bottom:14px; }
-  .brand{ display:flex; align-items:center; gap:12px; }
-  .brand__mark{ width:22px; height:22px; display:block; }
-  .brand__name{ font-family:var(--body); font-size:15px; letter-spacing:.03em; font-weight:500; }
-  .nav__links{ display:flex; gap:36px; align-items:center; }
-  .nav__links a{ font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; color:var(--ash); position:relative; padding:4px 0; transition:color .4s var(--ease); }
-  .nav__links a::after{ content:""; position:absolute; left:0; bottom:0; height:1px; width:100%; background:var(--bone); transform:scaleX(0); transform-origin:right; transition:transform .45s var(--ease); }
-  .nav__links a:hover{ color:var(--bone); }
-  .nav__links a:hover::after{ transform:scaleX(1); transform-origin:left; }
+  .inset b{ color:var(--ink); font-weight:600; }
+  .tag{ margin-top:clamp(26px,3vw,42px); }
+  .tag__k{ font-family:var(--pixel); font-weight:500; font-size:clamp(15px,1.5vw,19px); letter-spacing:.02em; }
+  .tag__d{ margin-top:8px; font-size:14px; color:var(--faint); }
 
-  /* ---------- hero ---------- */
-  .hero{ position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding-top:140px; padding-bottom:96px; overflow:hidden; }
-  #field{ position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
-  .hero .wrap{ z-index:3; }
-  .hero__eyebrow{ margin-bottom:34px; opacity:0; transform:translateY(14px); }
-  .hero__h1{
-    font-family:var(--display); font-weight:200; font-optical-sizing:auto;
-    font-size:clamp(34px,5.6vw,72px); line-height:1.07; letter-spacing:-.012em;
-    max-width:17ch; text-wrap:balance;
-  }
-  .hero__h1 em{ font-style:italic; color:var(--bone); }
-  .hero__h1 .word{ display:inline-block; opacity:0; transform:translateY(.5em); filter:blur(6px); }
-  .hero__sub{
-    margin-top:clamp(30px,4vw,42px); max-width:50ch; color:var(--bone-dim);
-    font-size:clamp(16px,1.5vw,19px); font-weight:300; line-height:1.66;
-    opacity:0; transform:translateY(14px);
-  }
-  .hero__sub b{ color:var(--bone); font-weight:400; }
-  .hero__meta{ display:flex; gap:26px; margin-top:46px; flex-wrap:wrap; opacity:0; transform:translateY(14px); }
-  .hero__meta span{ display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:12px; letter-spacing:.04em; color:var(--ash); }
-  .hero__meta i{ width:5px; height:5px; border-radius:50%; background:var(--signal); display:inline-block; }
+  .head{ font-family:var(--pixel); font-weight:500; font-size:clamp(26px,3.4vw,48px); line-height:1.04; letter-spacing:.01em; }
+  .body p{ color:var(--dim); font-size:clamp(15.5px,1.4vw,18px); line-height:1.62; max-width:46ch; }
+  .body p + p{ margin-top:1.3em; }
+  .body b{ color:var(--ink); font-weight:600; }
+  .gap-lg{ margin-top:clamp(28px,3.6vw,52px); }
+  .gap-md{ margin-top:clamp(20px,2.4vw,32px); }
 
-  .is-ready .hero__eyebrow{ transition:opacity 1s var(--ease) .2s, transform 1s var(--ease) .2s; opacity:1; transform:none; }
-  .is-ready .hero__h1 .word{ transition:opacity .9s var(--ease), transform 1s var(--ease), filter .9s var(--ease); opacity:1; transform:none; filter:none; }
-  .is-ready .hero__sub{ transition:opacity 1s var(--ease), transform 1s var(--ease); opacity:1; transform:none; }
-  .is-ready .hero__meta{ transition:opacity 1s var(--ease), transform 1s var(--ease); opacity:1; transform:none; }
+  .bullets{ list-style:none; margin-top:18px; }
+  .bullets li{ position:relative; padding-left:24px; color:var(--dim); font-size:clamp(15px,1.35vw,17.5px); line-height:1.5; }
+  .bullets li + li{ margin-top:16px; }
+  .bullets li::before{ content:""; position:absolute; left:2px; top:.62em; width:6px; height:6px; background:var(--ink); }
+  .bullets b{ color:var(--ink); font-weight:600; }
 
-  .scrollcue{ position:absolute; bottom:30px; left:50%; transform:translateX(-50%); z-index:3; opacity:0; }
-  .is-ready .scrollcue{ transition:opacity 1.2s var(--ease) 2.6s; opacity:.5; }
-  .scrollcue__line{ width:1px; height:46px; background:linear-gradient(var(--bone),transparent); animation:cue 2.6s ease-in-out infinite; transform-origin:top; }
-  @keyframes cue{ 0%,100%{ transform:scaleY(.3); opacity:.15;} 50%{ transform:scaleY(1); opacity:.9;} }
+  /* spacer so content clears the fixed top bar on the very first cell */
+  .hero .cell--text{ padding-top:clamp(36px,5vw,72px); }
 
-  /* ---------- generic section ---------- */
-  .section{ padding-block:clamp(96px,16vh,200px); position:relative; z-index:2; }
-  .section--tight{ padding-top:clamp(40px,6vh,80px); }
-  .rule{ height:1px; background:var(--line); width:100%; }
+  /* ============ EVIDENCE ============ */
+  .ev{ padding:0; }
+  .ev__head{ padding:clamp(24px,3vw,40px) var(--gut) 0; }
+  .ev__k{ font-family:var(--pixel); font-weight:500; font-size:clamp(16px,1.6vw,20px); }
+  .ev__sub{ margin-top:8px; color:var(--faint); font-size:13.5px; font-family:var(--term); letter-spacing:.04em; }
+  .ev__row{ display:grid; grid-template-columns:repeat(2,1fr); margin-top:clamp(24px,3vw,40px); }
+  @media(min-width:820px){ .ev__row{ grid-template-columns:repeat(4,1fr); } }
+  .ev__cell{ padding:clamp(26px,3vw,44px) var(--gut); border-top:1px solid var(--line); }
+  .ev__cell + .ev__cell{ border-left:1px solid var(--line); }
+  @media(max-width:820px){ .ev__cell:nth-child(odd){ border-left:0; } .ev__cell:nth-child(even){ border-left:1px solid var(--line); } }
+  .ev__num{ font-family:var(--pixel); font-weight:600; font-size:clamp(40px,5.2vw,68px); line-height:.9; }
+  .ev__num small{ font-family:var(--term); font-size:.32em; color:var(--dim); margin-left:.2em; }
+  .ev__cap{ margin-top:14px; font-family:var(--term); font-size:15px; letter-spacing:.04em; color:var(--faint); text-transform:uppercase; line-height:1.4; }
+  .ev__note{ padding:clamp(22px,2.6vw,36px) var(--gut) clamp(30px,3.4vw,48px); color:var(--faint); font-size:14px; max-width:70ch; line-height:1.7; border-top:1px solid var(--line-soft); margin-top:clamp(24px,3vw,40px); }
+  .ev__note b{ color:var(--ink); font-weight:500; }
 
-  .reveal{ opacity:0; transform:translateY(28px); transition:opacity 1.1s var(--ease), transform 1.1s var(--ease); }
+  /* ============ CLOSING ============ */
+  .close{ min-height:74vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--gut); }
+  .close__line{ font-family:var(--pixel); font-weight:500; font-size:clamp(26px,4.2vw,56px); line-height:1.12; max-width:16ch; }
+  .close__line span{ color:var(--faint); }
+  .cta{ margin-top:clamp(34px,4vw,52px); background:var(--ink); color:#000; font-weight:500; font-size:16px; padding:14px 26px; transition:background .25s var(--ease), transform .25s var(--ease); }
+  .cta:hover{ background:#d6d6d6; } .cta:active{ transform:scale(.97); }
+
+  /* ============ FOOTER ============ */
+  .foot{ display:flex; flex-wrap:wrap; gap:14px 32px; align-items:center; justify-content:space-between; padding:26px var(--gut); border-bottom:0; }
+  .foot__note{ font-family:var(--term); font-size:15px; letter-spacing:.04em; color:var(--faint); }
+  .foot__note .demo{ color:#fff; }
+
+  /* reveals */
+  .reveal{ opacity:0; transform:translateY(20px); transition:opacity 1s var(--ease), transform 1s var(--ease); }
   .reveal.in{ opacity:1; transform:none; }
-
-  /* ---------- the thesis / manifesto essay ---------- */
-  .thesis__kicker{ margin-bottom:30px; }
-  .thesis__lead{
-    font-family:var(--display); font-weight:200; font-style:italic;
-    font-size:clamp(25px,3.6vw,42px); line-height:1.22; letter-spacing:-.005em;
-    color:var(--bone);
-  }
-  .prose{ margin-top:clamp(40px,6vh,68px); }
-  .prose p{ font-size:clamp(16px,1.35vw,18.5px); color:var(--bone-dim); }
-  .prose p + p{ margin-top:1.5em; }
-  .prose em{ font-family:var(--display); font-style:italic; font-weight:300; font-size:1.08em; color:var(--bone); }
-  .prose .drop::first-letter{
-    font-family:var(--display); font-weight:300; float:left; font-size:3.5em; line-height:.78;
-    padding:6px 14px 0 0; color:var(--bone);
-  }
-  .pull{
-    margin:clamp(46px,7vh,80px) 0; padding-left:clamp(20px,3vw,36px);
-    border-left:1px solid var(--signal-deep);
-    font-family:var(--display); font-weight:200; font-size:clamp(22px,3vw,34px);
-    line-height:1.26; color:var(--bone); letter-spacing:-.005em;
-  }
-  .pull em{ font-style:italic; color:var(--signal); }
-
-  /* ---------- SIGNATURE: the progression ---------- */
-  .prog{ position:relative; }
-  .prog__head{ text-align:center; margin-bottom:clamp(50px,8vh,92px); }
-  .prog__title{ font-family:var(--display); font-weight:200; font-size:clamp(26px,3.6vw,44px); line-height:1.15; letter-spacing:-.01em; }
-  .prog__title em{ font-style:italic; color:var(--signal); }
-  .prog__sub{ margin:22px auto 0; max-width:46ch; color:var(--ash); font-size:15px; }
-
-  .ladder{ display:grid; grid-template-columns:1fr; gap:0; border-top:1px solid var(--line); }
-  .step{
-    display:grid; grid-template-columns:54px 1fr; gap:clamp(18px,3vw,40px);
-    align-items:start; padding:clamp(28px,4.5vh,46px) 0; border-bottom:1px solid var(--line);
-    position:relative; transition:background .6s var(--ease);
-  }
-  @media(min-width:760px){ .step{ grid-template-columns:64px minmax(0,2.1fr) minmax(0,2.2fr); align-items:baseline; gap:clamp(24px,4vw,64px); } }
-  .step__idx{ font-family:var(--mono); font-size:12px; color:var(--ash-deep); letter-spacing:.1em; padding-top:.55em; transition:color .6s var(--ease); }
-  .step__word{
-    font-family:var(--display); font-weight:200; font-size:clamp(34px,6vw,64px); line-height:.98;
-    letter-spacing:-.02em; color:var(--ash-deep); transition:color .7s var(--ease), transform .7s var(--ease);
-  }
-  .step__word::after{ content:attr(data-glyph); font-family:var(--mono); font-size:.2em; vertical-align:super; margin-left:.5em; color:var(--ash-deep); letter-spacing:0; transition:color .7s var(--ease); }
-  .step__body{ }
-  .step__cap{ font-size:15px; color:var(--ash); line-height:1.6; max-width:42ch; transition:color .6s var(--ease); }
-  .step__cap b{ color:var(--bone-dim); font-weight:400; }
-  .step.lit .step__idx{ color:var(--signal); }
-  .step.lit .step__word{ color:var(--bone); }
-  .step.lit .step__word::after{ color:var(--signal); }
-  .step.lit .step__cap{ color:var(--bone-dim); }
-  .step.lit .step__cap b{ color:var(--bone); }
-  @media(min-width:760px){ .step.lit .step__word{ transform:translateX(8px); } }
-
-  /* ---------- what we build ---------- */
-  .build__lead{ font-family:var(--display); font-weight:200; font-size:clamp(26px,4vw,46px); line-height:1.14; letter-spacing:-.01em; max-width:16ch; }
-  .build__lead em{ font-style:italic; color:var(--signal); }
-  .build__intro{ margin-top:26px; max-width:54ch; color:var(--bone-dim); font-size:clamp(16px,1.4vw,18.5px); }
-  .build__intro b{ color:var(--bone); font-weight:400; }
-  .pillars{ margin-top:clamp(54px,8vh,96px); display:grid; grid-template-columns:1fr; gap:0; }
-  .pillar{ display:grid; grid-template-columns:1fr; gap:14px; padding:clamp(32px,4.5vw,48px) 0; border-top:1px solid var(--line); transition:padding-left .5s var(--ease); }
-  @media(min-width:820px){ .pillar{ grid-template-columns:.36fr .64fr; gap:clamp(28px,4vw,68px); align-items:baseline; } .pillar:hover{ padding-left:14px; } }
-  .pillar:last-child{ border-bottom:1px solid var(--line); }
-  .pillar__k{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--signal); }
-  .pillar__name{ font-family:var(--display); font-weight:200; font-size:clamp(24px,2.8vw,34px); line-height:1.06; margin-top:12px; }
-  .pillar__desc{ color:var(--ash); font-size:15.5px; line-height:1.62; max-width:48ch; }
-  .pillar__desc b{ color:var(--bone-dim); font-weight:400; }
-
-  /* ---------- evidence ---------- */
-  .evidence{ display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
-  @media(min-width:820px){ .evidence{ grid-template-columns:repeat(4,1fr); } }
-  .metric{ background:var(--void); padding:clamp(26px,3vw,40px) clamp(20px,2.4vw,32px); display:flex; flex-direction:column; gap:14px; }
-  .metric__num{ font-family:var(--display); font-weight:200; font-size:clamp(38px,5.4vw,64px); line-height:.9; letter-spacing:-.02em; }
-  .metric__num small{ font-size:.34em; color:var(--signal); letter-spacing:0; margin-left:.15em; font-family:var(--mono); }
-  .metric__cap{ font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--ash); line-height:1.6; text-transform:uppercase; }
-  .evidence__note{ margin-top:28px; max-width:60ch; color:var(--ash); font-size:14px; line-height:1.7; }
-  .evidence__note b{ color:var(--signal); font-weight:400; }
-
-  /* ---------- closing ---------- */
-  .close{ text-align:center; }
-  .close__line{ font-family:var(--display); font-weight:200; font-style:italic; font-size:clamp(26px,4.6vw,52px); line-height:1.2; max-width:18ch; margin:0 auto; }
-  .close__seal{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--signal); vertical-align:middle; margin:0 .12em; }
-  .cta{ display:inline-flex; align-items:center; gap:12px; margin-top:clamp(44px,6vh,68px); font-family:var(--mono); font-size:13px; letter-spacing:.06em; color:var(--bone); padding:14px 26px; border:1px solid var(--line-2); border-radius:2px; transition:gap .4s var(--ease), color .4s var(--ease), border-color .4s var(--ease), background .4s var(--ease); }
-  .cta:hover{ gap:20px; color:var(--void); background:var(--signal); border-color:var(--signal); }
-
-  /* ---------- footer ---------- */
-  .foot{ border-top:1px solid var(--line); padding-block:54px; }
-  .foot__row{ display:flex; flex-wrap:wrap; gap:18px 40px; align-items:center; justify-content:space-between; }
-  .foot__col{ display:flex; align-items:center; gap:12px; }
-  .foot__note{ font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--ash-deep); }
-  .foot__note .demo{ color:var(--signal-deep); }
-
-  @media(max-width:680px){
-    .nav__links{ gap:18px; }
-    .nav__links a:nth-child(2),.nav__links a:nth-child(3){ display:none; }
-    .step__word{ font-size:clamp(30px,11vw,44px); }
-  }
-
-  .no-js .reveal,.no-js .hero__eyebrow,.no-js .hero__sub,.no-js .hero__meta{ opacity:1; transform:none; }
-  .no-js .hero__h1 .word{ opacity:1; transform:none; filter:none; }
-  @media(prefers-reduced-motion:reduce){
-    *{ animation:none!important; transition-duration:.001s!important; }
-    .reveal,.hero__eyebrow,.hero__sub,.hero__meta{ opacity:1!important; transform:none!important; }
-    .hero__h1 .word{ opacity:1!important; transform:none!important; filter:none!important; }
-  }
+  @media(prefers-reduced-motion:reduce){ *{ animation:none!important; transition-duration:.001s!important; } .reveal{ opacity:1!important; transform:none!important; } }
 </style>
 </head>
-<body class="no-js">
-<script>document.body.classList.remove('no-js');</script>
+<body>
 
-<!-- ============ NAV ============ -->
-<nav class="nav" id="nav">
-  <a class="brand" href="#top" aria-label="Harbinger home">
-    <svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true">
-      <path d="M70 24 A33 33 0 1 0 76 64" fill="none" stroke="#ECEAE3" stroke-width="6" stroke-linecap="round"/>
-      <circle cx="83" cy="30" r="5" fill="#63D3C6"/>
-    </svg>
-    <span class="brand__name">Harbinger</span>
-  </a>
-  <div class="nav__links">
-    <a href="#thesis">Thesis</a>
-    <a href="#progression">Approach</a>
-    <a href="#build">The Lab</a>
-    <a href="#contact">Contact</a>
-  </div>
-</nav>
+<!-- ===== fixed grid + corners ===== -->
+<div class="grid" aria-hidden="true">
+  <div class="grid__frame"></div>
+  <div class="grid__v"></div>
+  <div class="grid__h"></div>
+  <span class="tick tl"></span><span class="tick tr"></span>
+  <span class="tick bl"></span><span class="tick br"></span>
+  <span class="tick ct"></span>
+</div>
 
-<main id="top">
+<a class="logo" href="#top" aria-label="Harbinger home">
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="86" cy="28" r="6" fill="#fff"/>
+  </svg>
+</a>
+<a class="join" href="mailto:research@harbinger.dev">Join the team</a>
 
-  <!-- ============ HERO ============ -->
-  <section class="hero">
-    <canvas id="field" aria-hidden="true"></canvas>
-    <div class="wrap">
-      <p class="eyebrow hero__eyebrow">The frontier research lab for predictive defense</p>
-      <h1 class="hero__h1" id="h1">Security trained on the past can only recognize the&nbsp;past. We build machines that <em>foresee&nbsp;the&nbsp;breach.</em></h1>
-      <p class="hero__sub">
-        <b>Harbinger builds world models for cybersecurity.</b> Our system, Scry, learns a network as a place it can simulate forward — and ranks how an intrusion will move through it, and where your sensors go blind, before the breach happens.
-      </p>
-      <div class="hero__meta">
-        <span><i></i>world models</span>
-        <span><i></i>sim-to-real validation</span>
-        <span><i></i>agent certification</span>
-      </div>
-    </div>
-    <div class="scrollcue"><span class="scrollcue__line"></span></div>
-  </section>
+<main class="shell" id="top">
 
-  <!-- ============ THESIS / MANIFESTO ============ -->
-  <section class="section" id="thesis">
-    <div class="wrap measure">
-      <p class="eyebrow--mute eyebrow thesis__kicker reveal">Our thesis</p>
-      <p class="thesis__lead reveal">A defense that has only read its own logs can recognize the attack it has already survived — and stays blind to the one taking shape.</p>
-
-      <div class="prose">
-        <p class="drop reveal">Machine defense built on signatures and logs inherits both the reach and the limits of its record. It is detection without anticipation, response without rehearsal. It waits at the door for a face it has seen before, while the intrusion that matters is the one assembling itself one quiet hop at a time — a path that exists, fully, before anyone walks it.</p>
-        <p class="reveal">A network is not a list of events. It is a space with structure: hosts, trust, privilege, and the seams between what is watched and what is not. An attacker reads that space and improvises through it. To meet them, a defender needs more than memory of the past — it needs the capacity to <em>perceive, anticipate, and improvise</em> within the unfolding dynamics of an intrusion.</p>
-
-        <p class="pull reveal">We treat the network as a world that can be<br>simulated forward — and let the model <em>rehearse the breach</em> before it ever happens.</p>
-
-        <p class="reveal">From any foothold, Scry rolls the intrusion forward — thousands of possible moves at once — then collapses that cloud of futures into the single path an attacker is most likely to take, and the sensors that would miss it. Not an alert after the fact. A ranking of the futures worth fearing first.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ SIGNATURE: PROGRESSION ============ -->
-  <section class="section section--tight" id="progression">
-    <div class="wrap">
-      <div class="prog__head reveal">
-        <h2 class="prog__title">From record to <em>foresight</em>.</h2>
-        <p class="prog__sub">Every security tool stops at one of these. A world model is the only one that reaches the last.</p>
-      </div>
-
-      <div class="ladder" id="ladder">
-        <div class="step">
-          <span class="step__idx">01</span>
-          <span class="step__word" data-glyph="SIEM">log</span>
-          <p class="step__cap"><b>What happened.</b> The record, always written after the fact. Indispensable, and always one step behind the event it describes.</p>
+  <!-- ============ HERO PANEL ============ -->
+  <section class="panel hero">
+    <div class="topbar"><h1>Predictive defense for the real network.</h1></div>
+    <div class="split">
+      <div class="cell cell--text">
+        <p class="lede reveal">Security models are trained on the written record — logs, signatures, the alerts of attacks already survived. But defense far exceeds the past. It is earned in the live cycle of intent, action, and consequence across networks no model has seen.</p>
+        <div class="inset reveal">
+          Truly defended networks must move from <b>records to worlds</b> — and acquire the capacity to perceive, anticipate, and improvise. They need a <b>world model of the intrusion.</b>
         </div>
-        <div class="step">
-          <span class="step__idx">02</span>
-          <span class="step__word" data-glyph="graph">graph</span>
-          <p class="step__cap"><b>What is reachable.</b> Attack graphs map the structure of what could be touched — but reachability is not likelihood, and a map is not a forecast.</p>
-        </div>
-        <div class="step">
-          <span class="step__idx">03</span>
-          <span class="step__word" data-glyph="model">world</span>
-          <p class="step__cap"><b>What could happen.</b> A learned model of the network that rolls forward, exploring how an intrusion would actually unfold across moves it has never seen.</p>
-        </div>
-        <div class="step">
-          <span class="step__idx">04</span>
-          <span class="step__word" data-glyph="Scry">foresight</span>
-          <p class="step__cap"><b>What will — ranked.</b> The cloud of futures collapses to the likeliest path to the crown, and the blind spots along it. The thing worth fixing first.</p>
+        <div class="tag reveal">
+          <div class="tag__k">FORESIGHT, NOT FORENSICS</div>
+          <div class="tag__d">On reachability, privilege, and blind spots</div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ============ WHAT WE BUILD ============ -->
-  <section class="section" id="build">
-    <div class="wrap">
-      <p class="eyebrow reveal" style="margin-bottom:26px;">What we build</p>
-      <h2 class="build__lead reveal">One model. Three things it <em>makes safe</em>.</h2>
-      <p class="build__intro reveal">Scry keeps a working model of your environment and uses it the way a strategist uses a war game — to find the move that matters before the adversary does, and to certify the agents we point at real networks.</p>
-
-      <div class="pillars">
-        <article class="pillar reveal">
-          <div><span class="pillar__k">Foresight</span><h3 class="pillar__name">Attack-path ranking</h3></div>
-          <p class="pillar__desc">Given a network, Scry ranks where an intrusion is most likely to move next and scores the blind spots your sensors leave uncovered — <b>across topologies it has never seen</b>.</p>
-        </article>
-        <article class="pillar reveal">
-          <div><span class="pillar__k">Assurance</span><h3 class="pillar__name">Agent certification</h3></div>
-          <p class="pillar__desc">A standing benchmark that tests whether an autonomous security agent is competent and safe. It <b>refuses to clear one by default</b>, before it is ever aimed at a live network.</p>
-        </article>
-        <article class="pillar reveal">
-          <div><span class="pillar__k">Fidelity</span><h3 class="pillar__name">Sim-to-real transfer</h3></div>
-          <p class="pillar__desc">Findings are proven to hold from fast simulation to real, instrumented hosts — graded by <b>actual rule-firing on live telemetry</b>, never by synthetic labels.</p>
-        </article>
+      <div class="cell cell--art">
+        <canvas class="art" id="art-orb" data-motif="orb" aria-label="Animated ASCII rendering of a scrying eye over a network field."></canvas>
       </div>
     </div>
   </section>
 
-  <!-- ============ EVIDENCE ============ -->
-  <section class="section section--tight" id="evidence">
-    <div class="wrap">
-      <p class="eyebrow--mute eyebrow reveal" style="margin-bottom:30px;">Held against the real thing — rank correlation vs. executed attacks</p>
-      <div class="evidence reveal">
-        <div class="metric"><span class="metric__num">0.98<small>ρ</small></span><span class="metric__cap">Path rank vs. real execution</span></div>
-        <div class="metric"><span class="metric__num">0.86<small>ρ</small></span><span class="metric__cap">Rank across unseen networks</span></div>
-        <div class="metric"><span class="metric__num">0.82<small>ρ</small></span><span class="metric__cap">Blind-spot rank correlation</span></div>
-        <div class="metric"><span class="metric__num">64<small>hosts</small></span><span class="metric__cap">Modeled per environment</span></div>
+  <!-- ============ FRONTIER PANEL ============ -->
+  <section class="panel">
+    <div class="split">
+      <div class="cell cell--art">
+        <canvas class="art" id="art-city" data-motif="city" aria-label="Animated ASCII rendering of a network rendered as a city of hosts."></canvas>
       </div>
-      <p class="evidence__note reveal">Detection signal is <b>real rule-firing</b>, not a synthetic proxy. Deep multi-host posture ranking remains an open frontier — we report it where it is weak, and we do not auto-clear what we cannot verify.</p>
+      <div class="cell cell--text">
+        <h2 class="head reveal">Trained on networks no one has seen.</h2>
+        <div class="body gap-lg">
+          <p class="reveal">Scry learns from procedurally generated networks across countless topologies. That diversity yields defense that <b>generalizes</b> to environments it was never shown.</p>
+          <p class="reveal">It builds on a learned simulator of lateral movement — every rollout a unique, ranked future of the same intrusion, graded against attacks that actually fired on real hosts.</p>
+        </div>
+        <p class="body gap-md reveal" style="color:var(--ink);font-weight:500;">For the past year, we've been pushing the frontier across:</p>
+        <ul class="bullets reveal">
+          <li><b>Attack-path models</b> that rank where an intrusion moves next</li>
+          <li><b>World models</b> that predict the outcome of each move</li>
+          <li><b>Blind-spot models</b> that surface where your sensors go dark</li>
+        </ul>
+      </div>
     </div>
   </section>
 
-  <!-- ============ CLOSING / CONTACT ============ -->
-  <section class="section" id="contact">
-    <div class="wrap close">
-      <p class="close__line reveal">Every breach was once<span class="close__seal"></span>only a possibility. We study the possibility.</p>
+  <!-- ============ EVIDENCE PANEL ============ -->
+  <section class="panel ev">
+    <div class="ev__head reveal">
+      <div class="ev__k">Held against the real thing.</div>
+      <div class="ev__sub">rank correlation vs. executed attacks · internal validation</div>
+    </div>
+    <div class="ev__row">
+      <div class="ev__cell reveal"><div class="ev__num">0.98<small>ρ</small></div><div class="ev__cap">Path rank vs. real execution</div></div>
+      <div class="ev__cell reveal"><div class="ev__num">0.86<small>ρ</small></div><div class="ev__cap">Rank across unseen networks</div></div>
+      <div class="ev__cell reveal"><div class="ev__num">0.82<small>ρ</small></div><div class="ev__cap">Blind-spot rank correlation</div></div>
+      <div class="ev__cell reveal"><div class="ev__num">64<small>hosts</small></div><div class="ev__cap">Modeled per environment</div></div>
+    </div>
+    <p class="ev__note reveal">Detection signal is <b>real rule-firing on live telemetry</b>, not a synthetic proxy. Deep multi-host posture ranking remains an open frontier — we report it where it is weak, and we do not auto-clear what we cannot verify.</p>
+  </section>
+
+  <!-- ============ CLOSING PANEL ============ -->
+  <section class="panel">
+    <div class="close">
+      <p class="close__line reveal">Every breach was once <span>only a possibility.</span> We study the possibility.</p>
       <a class="cta reveal" href="mailto:research@harbinger.dev">Request access to Scry →</a>
     </div>
   </section>
 
   <!-- ============ FOOTER ============ -->
-  <footer class="foot">
-    <div class="wrap foot__row">
-      <div class="foot__col">
-        <svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true">
-          <path d="M70 24 A33 33 0 1 0 76 64" fill="none" stroke="#ECEAE3" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="83" cy="30" r="5" fill="#63D3C6"/>
-        </svg>
-        <span class="brand__name">Harbinger</span>
-      </div>
-      <span class="foot__note">Predictive security research · <span class="demo">demo build</span></span>
+  <footer class="panel" style="border-bottom:0;">
+    <div class="foot">
+      <span class="foot__note">HARBINGER · predictive security research · <span class="demo">demo build</span></span>
       <span class="foot__note">天 · foresight</span>
     </div>
   </footer>
@@ -390,163 +261,108 @@
 <script>
   const REDUCED = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-  /* nav background on scroll */
-  const nav = document.getElementById('nav');
-  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 30);
-  window.addEventListener('scroll', onScroll, { passive:true }); onScroll();
-
-  /* word-split the hero headline for staggered ink-settle */
-  (function splitWords(){
-    const h1 = document.getElementById('h1');
-    if(!h1 || REDUCED) return;
-    const walk = (node, out) => {
-      node.childNodes.forEach(n => {
-        if(n.nodeType === 3){
-          n.textContent.split(/(\s+)/).forEach(tok => {
-            if(tok.trim() === ''){ out.appendChild(document.createTextNode(tok)); return; }
-            const s = document.createElement('span'); s.className='word'; s.textContent=tok; out.appendChild(s);
-          });
-        } else {
-          const el = document.createElement(n.tagName); walk(n, el); out.appendChild(el);
-        }
-      });
-    };
-    const frag = document.createElement('div'); walk(h1, frag);
-    h1.innerHTML = ''; while(frag.firstChild) h1.appendChild(frag.firstChild);
-    const words = h1.querySelectorAll('.word');
-    words.forEach((w,i)=> w.style.transitionDelay = (0.35 + i*0.045) + 's');
-  })();
-
-  /* orchestrated page load */
-  window.addEventListener('load', () => requestAnimationFrame(()=> document.body.classList.add('is-ready')));
-  /* fallback if load already fired */
-  if(document.readyState === 'complete') requestAnimationFrame(()=> document.body.classList.add('is-ready'));
-
   /* scroll reveals */
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach((e,i)=>{
-      if(e.isIntersecting){
-        e.target.style.transitionDelay = Math.min(i*60,200) + 'ms';
-        e.target.classList.add('in');
-        io.unobserve(e.target);
-      }
-    });
-  }, { threshold:0.18, rootMargin:'0px 0px -8% 0px' });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-
-  /* progression: light each step as it crosses the middle of the viewport */
-  (function progression(){
-    const steps = Array.from(document.querySelectorAll('#ladder .step'));
-    if(!steps.length) return;
-    if(REDUCED){ steps.forEach(s=>s.classList.add('lit')); return; }
-    const sio = new IntersectionObserver((entries)=>{
-      entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('lit'); });
-    }, { threshold:0.6, rootMargin:'0px 0px -20% 0px' });
-    steps.forEach(s => sio.observe(s));
-  })();
+  const io = new IntersectionObserver((es)=>{
+    es.forEach((e,i)=>{ if(e.isIntersecting){ e.target.style.transitionDelay=Math.min(i*55,180)+'ms'; e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold:0.16, rootMargin:'0px 0px -7% 0px' });
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
   /* ================================================================
-     HERO AMBIENT — a quiet world model: latent nodes drift, and a
-     foresight thread periodically traces a path between them, igniting
-     each node it reaches. Deliberately slow and low-contrast.
+     GENERATIVE ASCII ART
+     A flow field with an embedded motif (a scrying orb, or a city of
+     hosts) rendered as colored monospace characters on canvas — the
+     same idea as image-to-ASCII, but procedural and alive.
      ================================================================ */
-  (function field(){
-    const cv = document.getElementById('field'); if(!cv) return;
-    const hero = cv.closest('.hero');
-    const ctx = cv.getContext('2d');
-    let W=0,H=0; const DPR=Math.min(window.devicePixelRatio||1,2);
-    const BONE='236,234,227', SIG='99,211,198';
+  function makeAscii(canvas){
+    const ctx = canvas.getContext('2d', { alpha:false });
+    const DPR = Math.min(window.devicePixelRatio||1, 2);
+    const motif = canvas.dataset.motif;
+    const RAMP = " .,:;~-=+*ilI!?[]{}<>1ICZ#%8@";
+    const L = RAMP.length - 1;
+
+    // palettes [r,g,b]
+    const P = motif==='orb'
+      ? { base:[26,72,40], hi:[150,255,180], accent:[150,110,235] }     // green w/ violet sparks
+      : { base:[40,58,96], hi:[170,200,255], accent:[255,150,60] };     // blue w/ amber windows
+
+    let W=0,H=0,cols=0,rows=0,cw=9,ch=11;
+    // seeded building skyline for the city motif
     let _s=20260626; const rnd=()=>{ _s=(_s*1103515245+12345)&0x7fffffff; return _s/0x7fffffff; };
+    const SKY=[]; for(let i=0;i<40;i++) SKY.push(0.30+rnd()*0.62);
 
-    const N=26; let nodes=[];
-    function layout(){
-      const r=hero.getBoundingClientRect(); W=r.width; H=r.height;
-      cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px';
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-      if(nodes.length) return;
-      for(let i=0;i<N;i++) nodes.push({ fx:rnd(), fy:rnd(), vx:(rnd()-.5)*0.02, vy:(rnd()-.5)*0.02, lit:0 });
+    function resize(){
+      const r=canvas.getBoundingClientRect(); W=Math.max(40,r.width); H=Math.max(40,r.height);
+      canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+      cw=Math.max(7, Math.min(11, W/86)); ch=cw*1.22;
+      cols=Math.ceil(W/cw); rows=Math.ceil(H/ch);
+      ctx.font=Math.round(cw*1.5)+'px "VT323", monospace';
+      ctx.textBaseline='top';
     }
-    layout(); window.addEventListener('resize', layout);
+    resize(); window.addEventListener('resize', resize);
 
-    /* foresight thread state */
-    let path=[], pathT=0, lastNode=0;
-    function castPath(){
-      const start=(Math.random()*nodes.length)|0;
-      path=[start]; let cur=start;
-      for(let k=0;k<4;k++){
-        let best=-1,bd=1e9;
-        for(let j=0;j<nodes.length;j++){
-          if(path.indexOf(j)>=0) continue;
-          const dx=(nodes[j].fx-nodes[cur].fx), dy=(nodes[j].fy-nodes[cur].fy);
-          const d=dx*dx+dy*dy + Math.random()*0.04;
-          if(d<bd){ bd=d; best=j; }
-        }
-        if(best<0) break; path.push(best); cur=best;
+    function fields(nx,ny,t){
+      // layered flow
+      let v = 0.5 + 0.5*Math.sin(nx*7.0 + t*0.7)*Math.cos(ny*5.2 - t*0.5);
+      v = 0.40*v + 0.22*(0.5+0.5*Math.sin((nx*1.5+ny)*8.0 - t*0.9));
+      let acc = 0;
+      if(motif==='orb'){
+        const dx=nx-0.5, dy=(ny-0.46)*1.12, d=Math.hypot(dx,dy);
+        v += 0.85*Math.exp(-Math.pow((d-0.30)/0.045,2));       // glowing iris ring
+        v += 0.70*Math.exp(-Math.pow(d/0.075,2));              // bright pupil glow
+        if(d<0.028) v -= 0.6;                                  // dark pupil
+        v += 0.22*Math.exp(-Math.pow((ny-(0.46+0.30*Math.sin(t*0.5)))/0.018,2)); // scan sweep
+        // radial node spokes
+        v += 0.15*Math.max(0, Math.cos(Math.atan2(dy,dx)*8 - t)) * Math.exp(-Math.pow((d-0.30)/0.12,2));
+        if(d>0.27 && d<0.33){ const a=Math.sin((nx*53.1+ny*97.7))*43758.5; if(a-Math.floor(a)>0.94) acc=0.9; }
+      } else {
+        const hz=0.40;
+        if(ny>hz){
+          const b=Math.floor(nx*SKY.length), h=SKY[b%SKY.length];
+          const top=hz+(1-h)*(1-hz)*0.92;
+          if(ny>top){
+            v += 0.55;
+            const win=((Math.floor(nx*cols)*7 + Math.floor(ny*rows)*13 + b*5))%11;
+            if(win===0){ acc=0.55+0.45*Math.sin(t*1.8+b); }      // lit windows, amber
+          } else { v*=0.42; }
+        } else { v*=0.5 + 0.5*Math.exp(-Math.pow((ny-0.16)/0.2,2)); } // sky glow
       }
-      pathT=0;
+      return { v:Math.max(0,Math.min(1,v)), acc:Math.max(0,acc) };
     }
-    castPath();
 
-    function frame(){
-      ctx.clearRect(0,0,W,H);
-      const px=x=>x*W, py=y=>y*H;
-
-      /* drift */
-      for(const n of nodes){
-        n.fx+=n.vx*0.012; n.fy+=n.vy*0.012;
-        if(n.fx<0.02||n.fx>0.98) n.vx*=-1;
-        if(n.fy<0.04||n.fy>0.96) n.vy*=-1;
-        n.lit*=0.97;
-      }
-
-      /* faint static mesh between near nodes */
-      ctx.lineWidth=1;
-      for(let i=0;i<nodes.length;i++){
-        for(let j=i+1;j<nodes.length;j++){
-          const dx=px(nodes[i].fx)-px(nodes[j].fx), dy=py(nodes[i].fy)-py(nodes[j].fy);
-          const d=Math.hypot(dx,dy);
-          if(d<150){ ctx.strokeStyle=`rgba(${BONE},${0.05*(1-d/150)})`; ctx.beginPath(); ctx.moveTo(px(nodes[i].fx),py(nodes[i].fy)); ctx.lineTo(px(nodes[j].fx),py(nodes[j].fy)); ctx.stroke(); }
-        }
-      }
-
-      /* the foresight thread */
-      pathT += 0.0045;
-      const seg = pathT*(path.length-1);
-      const segI = Math.floor(seg);
-      for(let s=0; s<path.length-1; s++){
-        const a=nodes[path[s]], b=nodes[path[s+1]];
-        let p = s<segI ? 1 : s===segI ? (seg-segI) : 0;
-        if(p<=0) continue;
-        ctx.strokeStyle=`rgba(${SIG},0.42)`; ctx.lineWidth=1.4; ctx.lineCap='round';
-        ctx.beginPath(); ctx.moveTo(px(a.fx),py(a.fy));
-        ctx.lineTo(px(a.fx)+(px(b.fx)-px(a.fx))*p, py(a.fy)+(py(b.fy)-py(a.fy))*p); ctx.stroke();
-        if(s===segI && p>0.96 && lastNode!==path[s+1]){ nodes[path[s+1]].lit=1; lastNode=path[s+1]; }
-      }
-      if(pathT>=1.6){ castPath(); lastNode=-1; }
-
-      /* nodes */
-      for(const n of nodes){
-        const x=px(n.fx), y=py(n.fy);
-        ctx.fillStyle=`rgba(${BONE},${0.16+0.5*n.lit})`;
-        ctx.beginPath(); ctx.arc(x,y,1.4+1.6*n.lit,0,6.2832); ctx.fill();
-        if(n.lit>0.06){
-          ctx.strokeStyle=`rgba(${SIG},${0.5*n.lit})`; ctx.lineWidth=1;
-          ctx.beginPath(); ctx.arc(x,y,5+16*(1-n.lit),0,6.2832); ctx.stroke();
+    function lerp(a,b,t){ return a+(b-a)*t; }
+    function drawFrame(t){
+      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+      for(let cy=0; cy<rows; cy++){
+        const ny=cy/rows;
+        for(let cx=0; cx<cols; cx++){
+          const nx=cx/cols;
+          const {v,acc}=fields(nx,ny,t);
+          if(v<0.04 && acc<0.04) continue;
+          const idx=Math.max(0,Math.min(L, Math.round(v*L)));
+          let r=lerp(P.base[0],P.hi[0],v), g=lerp(P.base[1],P.hi[1],v), b=lerp(P.base[2],P.hi[2],v);
+          if(acc>0){ r=lerp(r,P.accent[0],acc); g=lerp(g,P.accent[1],acc); b=lerp(b,P.accent[2],acc); }
+          ctx.fillStyle='rgb('+(r|0)+','+(g|0)+','+(b|0)+')';
+          ctx.fillText(RAMP[idx], cx*cw, cy*ch);
         }
       }
-      raf=requestAnimationFrame(frame);
     }
 
-    let raf;
-    if(REDUCED){
-      /* one static foreseen path */
-      layout();
-      ctx.clearRect(0,0,W,H);
-      for(const n of nodes){ ctx.fillStyle=`rgba(${BONE},.18)`; ctx.beginPath(); ctx.arc(n.fx*W,n.fy*H,1.6,0,6.2832); ctx.fill(); }
-    } else {
-      raf=requestAnimationFrame(frame);
+    let raf=null, last=0, t0=0, running=false;
+    function loop(now){
+      if(!running) return;
+      if(now-last>62){ last=now; t0+=0.05; drawFrame(t0); }   // ~16fps
+      raf=requestAnimationFrame(loop);
     }
-  })();
+    function start(){ if(running||REDUCED) return; running=true; raf=requestAnimationFrame(loop); }
+    function stop(){ running=false; if(raf) cancelAnimationFrame(raf); }
+
+    if(REDUCED){ drawFrame(0.6); }
+    else {
+      const vis=new IntersectionObserver((es)=>{ es.forEach(e=> e.isIntersecting?start():stop()); }, {threshold:0.05});
+      vis.observe(canvas);
+    }
+  }
+  document.querySelectorAll('.art').forEach(makeAscii);
 </script>
 </body>
 </html>
