@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Predicting which BloodHound paths succeed · Harbinger Labs</title>
+<meta name="description" content="A posture-conditioned world model that ranks which Active Directory attack paths succeed and which evade detection, validated against real attack execution on the GOAD forest." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="article.css" rel="stylesheet" />
+</head>
+<body>
+<nav class="doc-nav">
+  <a class="doc-brand" href="../index.html" aria-label="Harbinger Labs home">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M70 24 A33 33 0 1 0 76 64" fill="none" stroke="#17181A" stroke-width="5" stroke-linecap="round"/><circle cx="83" cy="30" r="4.4" fill="#1E7A70"/></svg>
+    <span>Harbinger Labs</span>
+  </a>
+  <a class="doc-back" href="index.html">all writing</a>
+</nav>
+<article class="doc doc-wide">
+  <header>
+    <p class="doc-eyebrow rv">validation note</p>
+    <h1 class="doc-title rv">Predicting which BloodHound paths actually succeed, and which evade detection</h1>
+    <p class="doc-lede rv">A posture-conditioned world model, validated against real attack execution on the GOAD Active Directory forest. It ranks defense-conditioned attack outcomes on networks and postures it never trained on.</p>
+    <div class="doc-meta rv">
+      <span><b>method</b> world model conditioned on defensive posture</span>
+      <span><b>lab</b> GOAD forest on real Windows Server</span>
+      <span><b>oracle</b> 240 real-execution environments</span>
+    </div>
+  </header>
+  <div class="doc-body">
+
+    <h2 class="rv"><span class="sec-no">01</span>The problem</h2>
+    <p>BloodHound tells you which attack paths <em>exist</em>. Given a SharpHound collection, it computes the reachable edges: who can kerberoast whom, which access-control entry gets you <code class="inline">GenericAll</code> over a Domain Admin, which session lands you on a path to the domain controller. That graph is correct and it is useful. But it answers a reachability question, not an outcome question.</p>
+    <p>It does not tell you whether a given path <em>succeeds</em> under the defenses actually deployed on that network: a rotated service-account credential, a service principal restricted to AES-only encryption, a segmented subnet. And it does not tell you whether walking that path <em>trips an alert</em> or sails past the security monitoring unseen. Two paths with identical BloodHound reachability can have completely different real outcomes once you account for posture and detection.</p>
+    <p>That gap, between "a path exists" and "this path works <em>and</em> nobody sees it," is the thing a defender actually needs to prioritize remediation. It is the thing this work measures.</p>
+
+    <h2 class="rv"><span class="sec-no">02</span>The approach</h2>
+    <p><strong>A posture-conditioned world model.</strong> Instead of treating the Active Directory graph as static, we condition the prediction on the <em>defensive posture</em> of the environment: the controls a defender has deployed. The model takes a graph plus a compact posture vector and predicts, per path, two independent quantities: the probability the attack <strong>succeeds</strong>, and the probability it is <strong>detected</strong>.</p>
+
+    <figure class="fig rv">
+      <div class="flow">
+        <div class="step on"><span class="s-k">simulate</span><span class="s-t">posture-conditioned rollout</span><span class="s-d">rank candidate paths in the world model from a graph and a posture vector.</span></div>
+        <div class="step"><span class="s-k">execute</span><span class="s-t">real attack on the lab</span><span class="s-d">run the same paths against a live multi-domain Active Directory forest.</span></div>
+        <div class="step"><span class="s-k">grade</span><span class="s-t">real detection</span><span class="s-d">score by Windows events that actually fired, not synthetic labels.</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 1</span> &nbsp; the sim-to-real pipeline. paths are ranked in the world model, executed on the live forest, then graded against the real event log.</figcaption>
+    </figure>
+    <p>The posture vector captures the defensive controls that change real outcomes, each as a normalized value between zero and one. Conceptually, it covers patch level and credential hardening (for example, whether service principals are restricted to AES-only encryption), the fraction of credentials rotated (which closes off credential reuse), how far constrained and unconstrained delegation has been locked down, detection coverage (logging and rules deployed), and network segmentation. Those are the knobs a defender can actually turn, and they are the inputs the model reasons over.</p>
+
+    <p><strong>Success and detection are separate channels.</strong> We model them as <em>independent channels</em>. A detection rule never blocks an attack, it surfaces it. An attack that succeeds can be loud (detected) or quiet (undetected); an attack that fails can equally be loud or quiet. The product we care about, the <strong>reachable and undetected</strong> surface, is exactly the conjunction the defender loses sleep over: paths that both work and go unseen. Keeping the two channels separate is what lets us report a path as "succeeds but you'll catch it" versus "succeeds and you're blind to it."</p>
+    <p><strong>Why Spearman rank correlation.</strong> We score the model with Spearman rank correlation (<span class="stat"><span class="var">&rho;</span></span>), not point-prediction error. A defender does not need the model to say "this path succeeds with probability 0.62"; they need it to rank the paths so the worst one is on top. Spearman <span class="stat"><span class="var">&rho;</span></span> measures exactly that ranking agreement against the ground-truth outcome ordering, and it is calibration-invariant: a model that is systematically off by a monotone transform still ranks correctly and still earns full credit. That is the right notion of "useful" for triage.</p>
+    <p><strong>Why pre-registration.</strong> Every bar in this work, the <span class="stat"><span class="var">&rho;</span></span> thresholds, the held-out protocol, the oracle definition, and the conditions under which a result is declared insufficient, was frozen in a pre-registration and committed <em>before</em> any oracle was run, then never moved. In practice this means the decision rule that turns numbers into a verdict is written down and hashed first, so a passing result cannot be a post-hoc choice of threshold.</p>
+
+    <h2 class="rv"><span class="sec-no">03</span>The experiment</h2>
+    <p><strong>The lab.</strong> GOAD (Game of Active Directory) on real Windows Server in Azure: three domains, <code class="inline">sevenkingdoms.local</code>, <code class="inline">north.sevenkingdoms.local</code>, and <code class="inline">essos.local</code>, with real cross-domain and cross-forest trusts, and five target machines spanning the three domains. The attacks are real, not simulated: a real Kerberoasting service-ticket request (mapped to MITRE technique T1558.003) and a real credential-use lateral movement over SMB (technique T1078). Detection ground truth comes from the real Windows Security Event Log: event 4769 (Kerberos service-ticket request, the kerberoast signal) and event 4624 (logon, the credential-use signal), read off the live domain controllers.</p>
+    <p><strong>The 240-environment structure.</strong> The verdict rests on 8 held-out postures by 6 topology classes by 5 repeats, which is 240 real-execution environments. The 8 postures were frozen in advance and never seen by the model during training. Each environment is a real attack run against a real domain controller, scored against the real event log: no Monte Carlo, and no structural baseline standing in for execution.</p>
+    <p><strong>Leave-one-domain-out (LODO).</strong> To check that the detection result is not memorized per domain, we hold out an entire domain, derive the detection formula from the <em>remaining</em> domains only, and apply it to the held-out one. If <span class="stat"><span class="var">&rho;</span></span> stays above the bar on a domain the formula never saw, the ranking generalizes across domains rather than being fit to each.</p>
+    <p><strong>Why a real oracle.</strong> A simulator can only confirm that the model agrees with the simulator's own assumptions. The whole point is to find out whether the model's predictions survive contact with a real Kerberos stack, real AES-versus-RC4 ticket behavior, real event-log emission, and real trust traversal, none of which a simulator gets to define. The pre-registration designates the real-execution result as the <em>only</em> one that produces the verdict; the simulated cells are explicitly diagnostic.</p>
+
+    <h2 class="rv"><span class="sec-no">04</span>The results</h2>
+    <p><strong>The headline.</strong> On the verdict cell, an unseen network and an unseen posture, scored against the real oracle across 240 environments:</p>
+
+    <div class="eq rv">
+      <div class="eq-row"><span class="var">&rho;<sub>path</sub></span><span class="op">=</span><span class="val">0.890</span><span class="ci">95% CI [0.843, 0.934]</span><span class="lab">unseen network, real execution, bar &ge; 0.60</span></div>
+      <div class="eq-row"><span class="var">&rho;<sub>detect</sub></span><span class="op">=</span><span class="val">0.975</span><span class="ci">95% CI [0.943, 1.000]</span><span class="lab">unseen network, real execution, bar &ge; 0.50</span></div>
+    </div>
+
+    <div class="kpis rv">
+      <div class="kpi">
+        <span class="k-num t-seal">0.890</span>
+        <span class="k-lab">path-success <span class="stat"><span class="var">&rho;</span></span> <br>[0.843, 0.934], bar &ge; 0.60</span>
+      </div>
+      <div class="kpi">
+        <span class="k-num t-seal">0.975</span>
+        <span class="k-lab">detection <span class="stat"><span class="var">&rho;</span></span> <br>[0.943, 1.000], bar &ge; 0.50</span>
+      </div>
+      <div class="kpi">
+        <span class="k-num">0.958</span>
+        <span class="k-lab">conformal coverage <br>over-covered on the conservative side, disclosed not hidden</span>
+      </div>
+    </div>
+
+    <p>The model ranks defense-conditioned attack outcomes on networks <em>and</em> postures it never trained on, against real execution on the full forest, well enough to clear all three frozen bars. The conformal coverage of <span class="stat"><span class="var">0.958</span></span> is over-covered on the conservative side: the intervals are wider than nominal, which we disclose rather than hide.</p>
+
+    <p><strong>The four-cell table.</strong> Reachability generalization has two axes: has the model seen this <em>network</em>, and has it seen this <em>posture</em>. Only the cell where both answers are "no" is a real test; the other three leak information. The simulated cells are diagnostic only; the verdict rests on the real-execution cell alone.</p>
+
+    <div class="table-wrap rv">
+      <table class="data">
+        <caption>four-cell reachability generalization</caption>
+        <thead>
+          <tr><th>cell</th><th>oracle</th><th class="t-num">n</th><th class="t-num">path-success <span class="stat"><span class="var">&rho;</span></span></th><th class="t-num">detection <span class="stat"><span class="var">&rho;</span></span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>seen network, seen posture</td><td>simulated</td><td class="t-num">56</td><td class="t-num"><span class="num">0.650</span></td><td class="t-num"><span class="num">0.901</span></td></tr>
+          <tr><td>seen network, unseen posture</td><td>simulated</td><td class="t-num">42</td><td class="t-num"><span class="num">0.229</span></td><td class="t-num"><span class="num">0.943</span></td></tr>
+          <tr><td>unseen network, seen posture</td><td>simulated</td><td class="t-num">8</td><td class="t-num"><span class="num">0.756</span></td><td class="t-num"><span class="num">0.926</span></td></tr>
+          <tr class="row-hi"><td class="t-seal">unseen network and unseen posture (verdict)</td><td class="t-seal">real exec</td><td class="t-num t-seal">240</td><td class="t-num"><span class="num t-seal">0.890</span></td><td class="t-num"><span class="num t-seal">0.975</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="fig rv">
+      <div class="quad-wrap">
+        <div class="quad">
+          <div class="qc"><span class="q-k">seen network · seen posture</span><span class="q-v">0.650</span></div>
+          <div class="qc"><span class="q-k">seen network · unseen posture</span><span class="q-v">0.229</span></div>
+          <div class="qc"><span class="q-k">unseen network · seen posture</span><span class="q-v">0.756</span></div>
+          <div class="qc hi"><span class="q-k">unseen network · unseen posture, real execution</span><span class="q-v">0.890</span></div>
+        </div>
+        <div class="quad-ax"><span>path-success rank correlation</span><span>n shown per cell in the table above</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 2</span> &nbsp; path-success ranking across the two generalization axes. only the highlighted unseen-by-unseen cell is scored against real execution and produces the verdict.</figcaption>
+    </figure>
+
+    <p>The unseen-by-unseen real cell is the only one that counts. Note the seen-network, unseen-posture simulated cell at <span class="stat"><span class="var">&rho;</span><span class="op">=</span>0.229</span>: generalizing to a new posture in simulation is <em>harder</em> than the real-execution verdict cell, because the real forest's posture controls act at the domain controller and service layer in a structurally cleaner way than the simulator's posture sweep. We report the weak simulated cell rather than bury it.</p>
+
+    <p><strong>Leave-one-domain-out.</strong> Every held-out domain clears the detection bar of <span class="stat"><span class="var">&rho;</span><span class="op">&ge;</span>0.50</span> using only the other domains' data, with per-cell <span class="stat"><span class="var">&rho;</span></span> spanning <span class="stat">0.549</span> to <span class="stat">1.000</span>:</p>
+
+    <div class="table-wrap rv">
+      <table class="data">
+        <caption>leave-one-domain-out detection &rho;</caption>
+        <thead>
+          <tr><th>held-out</th><th class="t-num">n</th><th class="t-num">LODO detection <span class="stat"><span class="var">&rho;</span></span></th><th>bar &ge; 0.50</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>essos.local (kerberoast and credential-use)</td><td class="t-num">80</td><td class="t-num"><span class="num">0.739</span></td><td class="t-seal">pass</td></tr>
+          <tr class="row-hi"><td>sevenkingdoms.local (credential-use)</td><td class="t-num">40</td><td class="t-num"><span class="num t-seal">1.000</span></td><td class="t-seal">pass</td></tr>
+          <tr><td>north domain kerberoast (formula derived from essos)</td><td class="t-num">40</td><td class="t-num"><span class="num">0.577</span></td><td class="t-seal">pass</td></tr>
+          <tr><td>kerberoast with Samba-transferred formula (worst cell)</td><td class="t-num">40</td><td class="t-num"><span class="num">0.549</span></td><td class="t-seal">pass</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The credential-use formula is fully structural and generalizes perfectly, at <span class="stat"><span class="var">&rho;</span><span class="op">=</span>1.000</span> on a held-out domain with four distinct targets confirming it. The kerberoast formula is specific to the operating-system class (see section 05, limitation 3), and the <span class="stat">0.549</span> worst cell is precisely the case where the wrong formula is transferred across that boundary. It still clears the bar, but the miss is real and disclosed.</p>
+
+    <p><strong>Generalization across topologies.</strong> Independent of execution, we tested reachability-reasoning generalization across 225 procedurally generated graphs in three generator families, using a leave-one-generator-out (LOGO) protocol, scored by an independent breadth-first-search oracle that never calls the model:</p>
+
+    <div class="bars rv">
+      <div class="bar-row">
+        <span class="bar-lab">family A, n=75</span>
+        <span class="bar-track"><span class="bar-fill" data-w="84.2%"></span></span>
+        <span class="bar-val">0.842</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lab">family B, n=75</span>
+        <span class="bar-track"><span class="bar-fill" data-w="85.5%"></span></span>
+        <span class="bar-val">0.855</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lab">family C, n=75</span>
+        <span class="bar-track"><span class="bar-fill" data-w="85.0%"></span></span>
+        <span class="bar-val">0.850</span>
+      </div>
+    </div>
+
+    <p>The LOGO 95% confidence intervals are <span class="stat">A [0.823, 0.859]</span>, <span class="stat">B [0.837, 0.871]</span>, and <span class="stat">C [0.833, 0.866]</span>. This test covers reachability only (no attack run, no logs); it is necessary but not sufficient for the joint claim, and we say so up front.</p>
+
+    <p><strong>Generalization with real execution and real detection.</strong> On three additional held-out generator families, each scored on real execution and a real detection source, all clear both bars independently, with no pooled <span class="stat"><span class="var">&rho;</span></span> hiding a weak family:</p>
+
+    <div class="table-wrap rv">
+      <table class="data">
+        <caption>held-out families, real execution and detection</caption>
+        <thead>
+          <tr><th>family</th><th>detection source</th><th class="t-num">n</th><th class="t-num">path-success <span class="stat"><span class="var">&rho;</span></span></th><th class="t-num">detection <span class="stat"><span class="var">&rho;</span></span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>D, GOAD forest</td><td>Wazuh security monitoring</td><td class="t-num">80</td><td class="t-num"><span class="num">0.965</span> [0.937, 0.984]</td><td class="t-num"><span class="num">0.683</span> [0.557, 0.809]</td></tr>
+          <tr><td>E, high-density domain controller</td><td>native Windows logs</td><td class="t-num">80</td><td class="t-num"><span class="num">0.965</span> [0.937, 0.984]</td><td class="t-num"><span class="num">0.839</span> [0.737, 0.950]</td></tr>
+          <tr><td>F, new two-domain forest</td><td>Wazuh security monitoring</td><td class="t-num">80</td><td class="t-num"><span class="num">0.965</span> [0.937, 0.984]</td><td class="t-num"><span class="num">0.683</span> [0.557, 0.809]</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Counterfactuals.</strong> Beyond ranking the current surface, the model predicts how the surface <em>changes</em> under a defensive intervention. In a held-out evaluation we validated three intervention classes against the measured counterfactual effect on real execution: graded delegation-locking, graded credential-rotation, and binary segmentation:</p>
+
+    <div class="table-wrap rv">
+      <table class="data">
+        <caption>predicted versus measured change in success</caption>
+        <thead>
+          <tr><th>intervention</th><th class="t-num">predicted-vs-measured <span class="stat"><span class="var">&rho;</span></span></th><th class="t-num">95% CI</th></tr>
+        </thead>
+        <tbody>
+          <tr class="row-hi"><td class="t-seal">credential rotation</td><td class="t-num"><span class="num t-seal">0.800</span></td><td class="t-num">[0.610, 0.911]</td></tr>
+          <tr><td>delegation locking</td><td class="t-num"><span class="num">0.741</span></td><td class="t-num">[0.324, 0.928]</td></tr>
+          <tr><td>segmentation</td><td class="t-num"><span class="num">0.609</span></td><td class="t-num">[0.371, 0.771]</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The leave-one-intervention-type-out result is <span class="stat"><span class="var">&rho;</span><span class="op">=</span>0.609</span>, clearing the frozen bar of <span class="stat"><span class="var">&rho;</span><span class="op">&ge;</span>0.60</span>. Credential rotation is the robust pass, with a confidence interval entirely above 0.60. Delegation locking and segmentation pass on the point estimate, but their confidence intervals dip below 0.60: a genuine but marginal result, disclosed here rather than smoothed over.</p>
+
+    <h2 class="rv"><span class="sec-no">05</span>Honest limitations</h2>
+    <p>These are not caveats to bury. They are the boundaries of the claim, stated technically.</p>
+
+    <div class="callout warn rv">
+      <span class="callout-k">limitation</span>
+      <p>(1) Lab forest, not real enterprise Active Directory. GOAD is a realistic, trust-bearing, multi-domain Windows forest, but we built it. It does not have the scale, the organic access-control sprawl, the decade of accreted group nesting, or the messy collection reality of a real enterprise. The model's internal network representation is also a short two-hop window; real forests have three to six-hop chains, which the model handles because the posture controls act at the domain controller and service layer regardless of path depth, but deep multi-hop ranking is an extrapolation, not an interpolation. In our internal validation, roughly 13% of large-graph candidates are flagged as low fidelity for this reason.</p>
+    </div>
+
+    <div class="callout warn rv">
+      <span class="callout-k">limitation</span>
+      <p>(2) Native and Wazuh logs, not production endpoint detection. The headline detection <span class="stat"><span class="var">&rho;</span></span> of <span class="stat">0.975</span> was measured against native Windows Event Logs. When we move the same model to a real Wazuh security-monitoring deployment (families D and F), detection <span class="stat"><span class="var">&rho;</span></span> drops to <span class="stat">0.683 <span class="ci">[0.557, 0.809]</span></span>. This is a real calibration-transfer effect, exactly as pre-registered: the native-log-calibrated detection head over-predicts detection for AES-only kerberoast attempts, which emit no roastable-ticket event under the Wazuh rules. It still clears the <span class="stat"><span class="var">&rho;</span><span class="op">&ge;</span>0.50</span> bar, and family E (native logs on the densified forest) reproduces the higher native behavior at <span class="stat"><span class="var">&rho;</span><span class="op">=</span>0.839</span>, confirming the drop is the source change, not the model. But a production endpoint detection and response product is a different detection surface again, and we have not validated against one.</p>
+    </div>
+
+    <figure class="fig rv">
+      <div class="rings">
+        <div class="ring"><span class="dial" style="--p:98"><b>0.975</b></span><span class="r-lab">native windows logs</span></div>
+        <div class="ring"><span class="dial" style="--p:84"><b>0.839</b></span><span class="r-lab">native logs, densified forest</span></div>
+        <div class="ring"><span class="dial" style="--p:68"><b>0.683</b></span><span class="r-lab">wazuh security monitoring</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 3</span> &nbsp; detection rank correlation by log source. moving from native windows events to wazuh rules is a real calibration-transfer drop, and it still clears the 0.50 bar.</figcaption>
+    </figure>
+
+    <div class="callout warn rv">
+      <span class="callout-k">limitation</span>
+      <p>(3) Per-operating-system detection calibration. Samba is not Windows. The kerberoast detection formula is specific to the operating-system class. Samba and Windows have fundamentally different event-4769 emission behavior, so when the wrong formula is transferred across that boundary, cross-operating-system detection <span class="stat"><span class="var">&rho;</span></span> drops to about <span class="stat">0.55</span>. The credential-use channel is fully structural and does not have this problem, at <span class="stat"><span class="var">&rho;</span><span class="op">=</span>1.000</span>, but the kerberoast channel must not collapse Samba and Windows domain controllers into one formula. This is disclosed, not papered over.</p>
+    </div>
+
+    <p>The three open boundaries, carried on every artifact including every command-line report:</p>
+    <ol>
+      <li>Real enterprise networks, not validated (lab forests only).</li>
+      <li>Production endpoint detection, not validated; richer Wazuh lab detection partially closes this, but Wazuh is not production endpoint detection.</li>
+      <li>Temporal and real network drift, not validated; a design-partner export over time remains the decisive test.</li>
+    </ol>
+
+    <h2 class="rv"><span class="sec-no">06</span>What this means for practitioners</h2>
+    <p><strong>What you can do with this today.</strong> Drop in a SharpHound or BloodHound export. The pipeline scores collection completeness first (full, partial, or insufficient, with named re-collection guidance if not full), then returns your attack paths ranked by <strong>reachable and undetected</strong> risk, each with a confidence interval, then the highest-impact defensive fixes as posture counterfactuals. Counterfactual fixes are validated for credential rotation, delegation locking, and segmentation; anything else is flagged as out of validation rather than claimed. The whole thing runs locally; your collection never leaves your machine.</p>
+    <p><strong>What you cannot do yet.</strong> You cannot treat the detection numbers as validated against your production endpoint detection, and you cannot treat the ranking as validated on enterprise-scale drift over time. Those are boundaries 2 and 3, and they need a design partner with a real network and a real detection stack, not more lab work.</p>
+    <p><strong>The free tool.</strong> A local command-line tool ships alongside this writeup. It runs the exact pipeline above against a BloodHound export you already understand (your own GOAD lab, or a test export), so you can verify the output before you would ever point it at real data. Every report it prints carries the three open boundaries at the bottom.</p>
+    <p><strong>The evidence.</strong> The validation harnesses, the frozen pre-registrations, the per-environment oracle records, and the independent audits are all available with the project. Every <span class="stat"><span class="var">&rho;</span></span> in this post is reconstructable from that evidence.</p>
+
+    <div class="callout rv">
+      <span class="callout-k">methodology</span>
+      <p>The model is treated as a frozen black box throughout this evaluation. No result in this post retrained on its own test data. Every bar and protocol was fixed in advance and never moved once an oracle had been run against it.</p>
+    </div>
+
+  </div>
+</article>
+<footer class="doc-foot">
+  <a href="../index.html">&#8592; Harbinger Labs</a>
+  <span class="fine">Harbinger Labs · world models for cybersecurity</span>
+  <a href="index.html">all writing &#8594;</a>
+</footer>
+<script src="article.js"></script>
+</body>
+</html>

@@ -13,8 +13,10 @@
     --bg:#000;
     --panel:#0a0a0b;
     --ink:#FFFFFF;
+    --ink-2:#B6B8BE;        /* legible de-emphasis for headlines (not muddy) */
     --dim:#ACACAE;
     --faint:#6C6C6E;
+    --glow:0 0 24px rgba(255,255,255,.32), 0 0 3px rgba(255,255,255,.30);
     --line:rgba(255,255,255,.24);
     --line-soft:rgba(255,255,255,.10);
 
@@ -29,7 +31,7 @@
   }
 
   *{ box-sizing:border-box; margin:0; padding:0; }
-  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; scroll-padding-top:calc(var(--bar) + 24px); }
+  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; scroll-padding-top:calc(var(--frame) + var(--bar) + 22px); }
   body{
     background:var(--bg); color:var(--ink);
     font-family:var(--body); font-weight:400; line-height:1.6; font-size:16px;
@@ -57,10 +59,13 @@
 
   /* ============ NAV ============ */
   .nav{
-    position:fixed; z-index:70;
-    top:calc(var(--frame) + 1px); left:calc(var(--frame) + 1px); right:calc(var(--frame) + 1px);
-    height:calc(var(--bar) - 1px);
-    display:flex; align-items:stretch; justify-content:space-between; background:var(--bg);
+    position:fixed; z-index:70; top:0; left:0; right:0;
+    height:calc(var(--frame) + var(--bar));
+    padding:var(--frame) var(--frame) 0; background:var(--bg);
+  }
+  .nav__inner{
+    height:var(--bar); display:flex; align-items:stretch; justify-content:space-between;
+    border:1px solid var(--line); border-bottom:0;
   }
   .nav__brand{ display:flex; align-items:center; gap:16px; }
   .nav__mark{ width:var(--bar); height:100%; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--line); flex:none; }
@@ -98,7 +103,8 @@
     font-family:var(--pixel); font-weight:500; font-size:clamp(30px,3.9vw,60px);
     line-height:1.08; letter-spacing:.005em; max-width:18ch;
   }
-  .hero__title .setup{ color:var(--dim); }
+  .hero__title .setup{ color:var(--ink-2); }
+  .hero__title .key{ color:#fff; text-shadow:var(--glow); }
   .hero__sub{ margin-top:clamp(22px,2.6vw,34px); max-width:46ch; color:var(--dim); font-size:clamp(16px,1.45vw,19px); line-height:1.62; }
   .hero__sub b{ color:var(--ink); font-weight:600; }
   .hero__meta{ display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:clamp(28px,3vw,42px); }
@@ -147,12 +153,33 @@
   .ev__note{ padding:clamp(22px,2.6vw,36px) var(--gut) clamp(30px,3.4vw,48px); color:var(--faint); font-size:14px; max-width:70ch; line-height:1.7; border-top:1px solid var(--line-soft); margin-top:clamp(24px,3vw,40px); }
   .ev__note b{ color:var(--ink); font-weight:500; }
 
+  /* ============ RESEARCH INDEX ============ */
+  .idx{ border-top:1px solid var(--line); margin-top:clamp(24px,3vw,40px); }
+  .entry{ display:flex; align-items:baseline; justify-content:space-between; gap:24px; padding:clamp(22px,2.8vw,34px) var(--gut); border-bottom:1px solid var(--line); transition:background .3s var(--ease); }
+  .entry:hover{ background:rgba(255,255,255,.035); }
+  .entry__t{ font-family:var(--pixel); font-weight:500; font-size:clamp(18px,2vw,28px); line-height:1.12; transition:transform .35s var(--ease); }
+  .entry:hover .entry__t{ transform:translateX(8px); }
+  .entry__m{ font-family:var(--term); font-size:16px; letter-spacing:.04em; color:var(--faint); text-transform:uppercase; white-space:nowrap; }
+
   /* ============ CLOSING ============ */
   .close{ min-height:70vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--gut); }
   .close__line{ font-family:var(--pixel); font-weight:500; font-size:clamp(26px,4.2vw,56px); line-height:1.12; max-width:16ch; }
-  .close__line span{ color:var(--faint); }
-  .cta{ margin-top:clamp(34px,4vw,52px); background:var(--ink); color:#000; font-weight:500; font-size:16px; padding:14px 26px; transition:background .25s var(--ease), transform .25s var(--ease); }
-  .cta:hover{ background:#d6d6d6; } .cta:active{ transform:scale(.97); }
+  .close__line span{ color:var(--ink-2); }
+  .close__line b{ font-weight:500; color:#fff; text-shadow:var(--glow); }
+  .cta{
+    position:relative; display:inline-flex; align-items:center; margin-top:clamp(34px,4vw,52px);
+    font-family:var(--term); font-size:21px; letter-spacing:.12em; text-transform:uppercase; color:#fff;
+    padding:16px 32px; background:transparent; border:1px solid rgba(255,255,255,.55); overflow:hidden;
+    clip-path:polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+    transition:color .35s var(--ease), border-color .35s var(--ease);
+  }
+  .cta::before{ content:""; position:absolute; inset:0; background:#fff; transform:translateX(-101%); transition:transform .42s var(--ease); }
+  .cta__t{ position:relative; z-index:1; display:inline-flex; align-items:center; gap:14px; }
+  .cta__arr{ display:inline-block; transition:transform .35s var(--ease); }
+  .cta:hover{ color:#000; border-color:#fff; }
+  .cta:hover::before{ transform:none; }
+  .cta:hover .cta__arr{ transform:translateX(8px); }
+  .cta:active{ transform:translateY(1px); }
 
   /* ============ FOOTER ============ */
   .foot{ border-bottom:0; }
@@ -177,7 +204,8 @@
   .why__wrap{ max-width:1000px; margin:0 auto; padding:clamp(80px,13vh,170px) var(--gut); text-align:center; display:flex; flex-direction:column; align-items:center; }
   .why__label{ font-family:var(--term); font-size:17px; letter-spacing:.22em; text-transform:uppercase; color:var(--faint); margin-bottom:clamp(26px,3.4vw,44px); }
   .why__head{ font-family:var(--pixel); font-weight:500; font-size:clamp(28px,4.4vw,62px); line-height:1.08; letter-spacing:.005em; max-width:20ch; }
-  .why__head .accent{ color:var(--dim); }
+  .why__head .setup{ color:var(--ink-2); }
+  .why__head .key{ color:#fff; text-shadow:var(--glow); }
   .why__body{ margin-top:clamp(34px,4.4vw,56px); max-width:62ch; }
   .why__body p{ color:var(--dim); font-size:clamp(16px,1.5vw,20px); line-height:1.66; }
   .why__body p + p{ margin-top:1.3em; }
@@ -208,20 +236,22 @@
 
 <!-- ===== nav ===== -->
 <nav class="nav">
-  <a class="nav__brand" href="#top" aria-label="Harbinger Labs home">
-    <span class="nav__mark">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
-        <circle cx="86" cy="28" r="6" fill="#fff"/>
-      </svg>
-    </span>
-    <span class="nav__name">Harbinger Labs</span>
-  </a>
-  <div class="nav__links">
-    <a href="#approach">Approach</a>
-    <a href="#research">Research</a>
-    <a href="#evidence">Evidence</a>
-    <a href="#contact">Contact</a>
+  <div class="nav__inner">
+    <a class="nav__brand" href="#top" aria-label="Harbinger Labs home">
+      <span class="nav__mark">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <path d="M70 22 A34 34 0 1 0 78 64" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+          <circle cx="86" cy="28" r="6" fill="#fff"/>
+        </svg>
+      </span>
+      <span class="nav__name">Harbinger Labs</span>
+    </a>
+    <div class="nav__links">
+      <a href="#approach">Approach</a>
+      <a href="#research">Research</a>
+      <a href="#evidence">Evidence</a>
+      <a href="#contact">Contact</a>
+    </div>
   </div>
 </nav>
 
@@ -231,7 +261,7 @@
   <section class="panel hero">
     <div class="split split--tall">
       <div class="cell cell--text cell--center">
-        <h1 class="hero__title"><span class="setup">Security trained on the past can only see the past.</span> We build models that foresee the breach.</h1>
+        <h1 class="hero__title"><span class="setup">Security trained on the past can only see the past.</span> <span class="key">We build models that foresee the breach.</span></h1>
         <p class="hero__sub"><b>Harbinger Labs builds world models for cybersecurity.</b> Scry learns a network as a place it can simulate forward — and ranks how an intrusion will move through it, and where your sensors go blind, before the breach happens.</p>
         <div class="hero__meta">
           <span><i></i>world models</span>
@@ -249,7 +279,7 @@
   <section class="panel why" id="why">
     <div class="why__wrap">
       <p class="why__label reveal">The new threat model</p>
-      <h2 class="why__head reveal">As models learn to reason, <span class="accent">so does the intrusion.</span></h2>
+      <h2 class="why__head reveal"><span class="setup">As models learn to reason,</span> <span class="key">so does the intrusion.</span></h2>
       <div class="why__body reveal">
         <p>The same intelligence that writes our software now writes the attack. A new class of adversary probes, pivots, and escalates at machine speed — tireless, improvising, and run at scale for the cost of compute.</p>
         <p>The threat is no longer the exploit you have already catalogued. It is <b>everything a capable agent can reason its way toward</b> — and that frontier widens with every model release. Defense built on yesterday's signatures was made for a slower world.</p>
@@ -276,8 +306,8 @@
     </div>
   </section>
 
-  <!-- ============ RESEARCH / FRONTIER ============ -->
-  <section class="panel" id="research">
+  <!-- ============ FRONTIER ============ -->
+  <section class="panel" id="frontier">
     <div class="split">
       <div class="cell cell--art">
         <canvas class="art" id="art-city" data-motif="city" aria-label="Animated ASCII rendering of a network as a city of hosts."></canvas>
@@ -295,6 +325,32 @@
           <li><b>Blind-spot models</b> that surface where your sensors go dark</li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ RESEARCH / FIELD NOTES ============ -->
+  <section class="panel" id="research">
+    <div class="ev__head reveal">
+      <div class="ev__k">Field notes</div>
+      <div class="ev__sub">research · tools · integrations</div>
+    </div>
+    <div class="idx">
+      <a class="entry reveal" href="research/goad-validation.html">
+        <span class="entry__t">Validating sim-to-emulation rank transfer on GOAD</span>
+        <span class="entry__m">validation note</span>
+      </a>
+      <a class="entry reveal" href="research/benchmark.html">
+        <span class="entry__t">An open benchmark for autonomous security agents</span>
+        <span class="entry__m">benchmark</span>
+      </a>
+      <a class="entry reveal" href="research/harbinger-cli.html">
+        <span class="entry__t">harbinger-cli — score your own network, locally</span>
+        <span class="entry__m">free local tool</span>
+      </a>
+      <a class="entry reveal" href="research/bloodhound.html">
+        <span class="entry__t">Scry queries for BloodHound</span>
+        <span class="entry__m">integration</span>
+      </a>
     </div>
   </section>
 
@@ -316,8 +372,8 @@
   <!-- ============ CLOSING / CONTACT ============ -->
   <section class="panel" id="contact">
     <div class="close">
-      <p class="close__line reveal">Every breach was once <span>only a possibility.</span> We study the possibility.</p>
-      <a class="cta reveal" href="mailto:research@harbinger.dev?subject=Access%20to%20Scry">Request access to Scry →</a>
+      <p class="close__line reveal"><span>Every breach was once only a possibility.</span> <b>We study the possibility.</b></p>
+      <a class="cta reveal" href="mailto:research@harbinger.dev?subject=Access%20to%20Scry"><span class="cta__t">Request access to Scry <span class="cta__arr">→</span></span></a>
     </div>
   </section>
 

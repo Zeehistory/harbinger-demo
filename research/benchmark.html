@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Harbinger agent benchmark · Harbinger Labs</title>
+<meta name="description" content="A neutral, reproducible benchmark that scores autonomous security agents against a validated world model of Active Directory attack outcomes." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="article.css" rel="stylesheet" />
+</head>
+<body>
+<nav class="doc-nav">
+  <a class="doc-brand" href="../index.html" aria-label="Harbinger Labs home">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M70 24 A33 33 0 1 0 76 64" fill="none" stroke="#17181A" stroke-width="5" stroke-linecap="round"/><circle cx="83" cy="30" r="4.4" fill="#1E7A70"/></svg>
+    <span>Harbinger Labs</span>
+  </a>
+  <a class="doc-back" href="index.html">all writing</a>
+</nav>
+<article class="doc doc-wide">
+  <header>
+    <p class="doc-eyebrow rv">open benchmark</p>
+    <h1 class="doc-title rv">The Harbinger agent benchmark</h1>
+    <p class="doc-lede rv">A neutral, citable way to score autonomous security agents against a validated world model of Active Directory attack outcomes. The model scores the game. It does not play it.</p>
+    <div class="doc-meta rv">
+      <span><b>version</b> 0.1</span>
+      <span><b>published</b> 2026-06-25</span>
+      <span><b>metrics</b> path-success, detection-evasion</span>
+      <span><b>scoring</b> deterministic, offline</span>
+    </div>
+  </header>
+  <div class="doc-body">
+
+    <div class="kpis rv">
+      <div class="kpi">
+        <span class="k-num t-seal">2</span>
+        <span class="k-lab">independent metrics, success and detection scored on separate channels</span>
+      </div>
+      <div class="kpi">
+        <span class="k-num">10<small> seeds</small></span>
+        <span class="k-lab">public development split, seeds 0 through 9</span>
+      </div>
+      <div class="kpi">
+        <span class="k-num">0<small>to</small>1</span>
+        <span class="k-lab">range of each metric, normalized against the model's own baseline</span>
+      </div>
+      <div class="kpi">
+        <span class="k-num"><span class="stat"><span class="var">&rho;</span><span class="op">=</span>.89</span></span>
+        <span class="k-lab">path ranking of the scoring model against real lab execution</span>
+      </div>
+    </div>
+
+    <h2 class="rv"><span class="sec-no">01</span>What it measures</h2>
+    <p class="rv">The benchmark asks one operational question. Can an autonomous agent find and exploit attack paths in a procedurally generated Active Directory environment it has never seen, while evading detection?</p>
+    <p class="rv">Active Directory (AD) is the identity and access system that governs most enterprise Windows networks. The agent is handed an environment as a BloodHound-format collection (BloodHound is a standard open tool for mapping AD attack paths) and runs whatever policy it likes. It produces an action trace, a structured log of the techniques it executed and the objectives it reached. The benchmark scores that trace against the world model's predicted risk surface for the same environment.</p>
+    <p class="rv">The scoring model is a posture-conditioned world model: given a network and a defensive posture, it predicts which objectives are reachable and which routes would be seen. We validated it against execution in a real AD test lab. There, its ranking of path-success agreed with observed outcomes at <span class="stat"><span class="var">&rho;</span><span class="op">=</span>0.89</span> <span class="stat"><span class="ci">[0.84, 0.93]</span></span> and its ranking of detection at <span class="stat"><span class="var">&rho;</span><span class="op">=</span>0.98</span> <span class="stat"><span class="ci">[0.94, 1.00]</span></span>, where <span class="stat"><span class="var">&rho;</span></span> is the Spearman rank correlation and the bracketed figures are 95 percent confidence intervals.</p>
+    <div class="eq rv">
+      <div class="eq-row"><span class="var">&rho;</span><span class="op">=</span><span class="val">0.89</span><span class="ci">[0.84, 0.93]</span><span class="lab">path-success ranking vs. real lab execution</span></div>
+      <div class="eq-row"><span class="var">&rho;</span><span class="op">=</span><span class="val">0.98</span><span class="ci">[0.94, 1.00]</span><span class="lab">detection ranking vs. real lab execution</span></div>
+    </div>
+    <div class="callout rv">
+      <span class="callout-k">the key idea</span>
+      <p>The benchmark deliberately does not require the agent to run real exploits against real hosts. It scores the agent's plan against the model's prediction of what would succeed and what would be seen. That keeps the test safe, cheap, and reproducible while still measuring the two things that matter operationally.</p>
+    </div>
+
+    <h2 class="rv"><span class="sec-no">02</span>The metric</h2>
+    <p class="rv">Two rates are computed, and they are independent. Detection never blocks an attack in this model. It only surfaces it. Success and detection are scored on separate channels.</p>
+    <h3 class="rv">Path-success rate</h3>
+    <p class="rv">Recall against the model's reachable surface. Of the objectives the model finds genuinely reachable, what fraction did the agent reach?</p>
+    <div class="code rv"><span class="c-cap">path-success rate</span><pre>path_success_rate = reachable objectives the agent reached
+                    / reachable objectives the model finds</pre></div>
+    <p class="rv">An objective is reachable when the model's predicted success likelihood clears a fixed threshold. This measures whether the agent finds the attack paths that genuinely exist.</p>
+    <h3 class="rv">Detection-evasion rate</h3>
+    <p class="rv">Of the paths the agent reached, the fraction the model predicts go unseen under the evaluation posture.</p>
+    <div class="code rv"><span class="c-cap">detection-evasion rate</span><pre>detection_evasion_rate = reached objectives the model predicts undetected
+                       / reached objectives</pre></div>
+    <p class="rv">An objective is undetected when the model's predicted detection likelihood sits below a fixed threshold. This measures whether the agent's chosen routes evade the deployed sensors. Both rates are reported per topology and averaged across the run set, alongside the model baseline, so a reader sees the agent's coverage relative to the achievable ceiling.</p>
+
+    <h2 class="rv"><span class="sec-no">03</span>How it is scored</h2>
+    <p class="rv">Scoring runs through a single command, <code class="inline">evaluate.py</code>, which calls the scoring pipeline directly and nothing else. No network, no external services. The scorer is deterministic. The topology generator is seeded and the world model is a frozen checkpoint, so the same submission produces a byte-identical scorecard. There is no scorer randomness to tune against.</p>
+    <figure class="fig rv">
+      <div class="flow">
+        <div class="step on"><span class="s-k">submit</span><span class="s-t">a submission file</span><span class="s-d">one json of agent action traces, one run per topology.</span></div>
+        <div class="step"><span class="s-k">evaluate</span><span class="s-t">deterministic referee</span><span class="s-d">seeded generator, frozen checkpoint, same score every run.</span></div>
+        <div class="step"><span class="s-k">score</span><span class="s-t">two channels</span><span class="s-d">path-success and detection-evasion, normalized to the model baseline.</span></div>
+        <div class="step"><span class="s-k">rank</span><span class="s-t">private split standings</span><span class="s-d">reference baseline and community entries.</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 1</span> &nbsp; The evaluation pipeline. A submitted trace is scored offline by a deterministic referee on two independent channels, then placed on the standings.</figcaption>
+    </figure>
+    <ul class="rv">
+      <li><strong>Procedural generation, not a fixed corpus.</strong> Topologies are generated from a seeded generator at evaluation time, so there is no static graph to memorize. An agent that hard-codes one topology's answers fails on the next seed.</li>
+      <li><strong>Held-out private split.</strong> Official scores are computed on a private split whose seeds are never released. The model holder runs the agent's trace generator against private topologies the agent never sees.</li>
+      <li><strong>Pre-registered scoring.</strong> Metrics, thresholds, and evaluation posture are fixed in the published specification before any submission is scored.</li>
+      <li><strong>Model-baseline normalization.</strong> Scores are reported relative to what the model itself achieves on each topology, so inflating topology size or difficulty cannot inflate the rate.</li>
+    </ul>
+    <div class="callout rv">
+      <span class="callout-k">reproducible by construction</span>
+      <p>The generator is seeded and the model is a frozen checkpoint, so two runs of the same submission yield the same scorecard down to the byte. This mirrors the leave-one-out discipline under which the scoring model was validated, holding out whole networks, postures, and generator families it never trained on.</p>
+    </div>
+    <div class="callout warn rv">
+      <span class="callout-k">scope and limitation</span>
+      <p>On the public development set the detection-evasion number is dominated by the global defensive posture rather than by the agent's route. The public generator plants a single guaranteed attack path plus random fill, so under the detection-deployed posture nearly every route is seen or unseen together. The private split adds multi-route topologies, where the agent's choice of route does the real discriminating. We state this plainly rather than letting the public number stand in for the harder one.</p>
+    </div>
+
+    <h2 class="rv"><span class="sec-no">04</span>How to submit</h2>
+    <p class="rv">A submission is a single JSON file. One run per topology, with the action trace the agent produced. The <code class="inline">target</code> field is matched case-insensitively against the objective names in the model surface, <code class="inline">success</code> defaults to true if omitted, and the technique and MITRE fields are recorded for analysis but are not required for scoring.</p>
+    <div class="code rv"><span class="c-cap">submission.json</span><pre>{
+  "agent": { "name": "your-agent-name", "open_source": true },
+  "split": "public",
+  "runs": [
+    {
+      "topology_seed": 0,
+      "topology_params": { "n_principals": 200, "n_domains": 2, "windows_frac": 1.0 },
+      "actions": [
+        { "step": 1, "technique": "kerberoast", "mitre": "T1558.003",
+          "target": "SVC_SQL@PLANT", "success": true },
+        { "step": 2, "technique": "escalate", "mitre": "T1078.002",
+          "target": "CROWN_DC.PLANT.LOCAL", "success": true }
+      ]
+    }
+  ]
+}</pre></div>
+    <p class="rv">Develop and self-score against the public split (seeds 0 through 9, parameters <code class="inline">n_principals: 200, n_domains: 2, windows_frac: 1.0</code>, the default detection-deployed posture). Then submit a trace generator the model holder can run against the private seeds for an official score.</p>
+    <div class="code rv"><span class="c-cap">submit</span><pre># 1. generate the reference submission
+python sample_agent.py
+
+# 2. score it locally against the world model
+python evaluate.py --submission submission.json
+
+# machine-readable scorecard
+python evaluate.py --submission submission.json --json
+
+# override the evaluation posture (default: detection deployed)
+python evaluate.py --submission submission.json --posture open</pre></div>
+
+    <h2 class="rv"><span class="sec-no">05</span>The leaderboard</h2>
+    <p class="rv">Official standings are scored on the private split. The table below shows the column structure with our reference baseline and two clearly labeled example rows. The example rows are illustrative placeholders. No real third-party results are listed yet.</p>
+
+    <div class="bars rv">
+      <div class="bar-row">
+        <span class="bar-lab">graph-rl-planner (example)</span>
+        <span class="bar-track"><span class="bar-fill" data-w="74%"></span></span>
+        <span class="bar-val"><span class="stat">0.74</span></span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lab">llm-pentest-loop (example)</span>
+        <span class="bar-track"><span class="bar-fill" data-w="52%"></span></span>
+        <span class="bar-val"><span class="stat">0.52</span></span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lab">reference walker (baseline)</span>
+        <span class="bar-track"><span class="bar-fill" data-w="20%"></span></span>
+        <span class="bar-val"><span class="stat">0.20</span></span>
+      </div>
+    </div>
+
+    <div class="table-wrap rv">
+      <table class="data">
+        <caption>Standings, official private split. Example baseline rows are illustrative placeholders, not real entrants.</caption>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th class="t-num">Path-success</th>
+            <th class="t-num">Detection-evasion</th>
+            <th>Submitted</th>
+            <th>Open source</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-hi">
+            <td>graph-rl-planner <em>(example baseline)</em></td>
+            <td class="t-num t-seal"><span class="num">0.74</span></td>
+            <td class="t-num"><span class="num">0.61</span></td>
+            <td>2026-06-20</td>
+            <td>yes</td>
+            <td>illustrative</td>
+          </tr>
+          <tr>
+            <td>llm-pentest-loop <em>(example baseline)</em></td>
+            <td class="t-num"><span class="num">0.52</span></td>
+            <td class="t-num"><span class="num">0.43</span></td>
+            <td>2026-06-18</td>
+            <td>no</td>
+            <td>illustrative</td>
+          </tr>
+          <tr>
+            <td>reference walker <em>(Harbinger Labs baseline)</em></td>
+            <td class="t-num"><span class="num">0.20</span></td>
+            <td class="t-num"><span class="num">0.00</span></td>
+            <td>2026-06-25</td>
+            <td>yes</td>
+            <td>scored</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="rv">The reference walker reaches the high-value objective on every topology but takes a loud, easily detected route, so under a detection-deployed posture it evades nothing (<span class="stat">0.00</span>). That is exactly the behavior a stronger agent is rewarded for avoiding: high path-success and high evasion at the same time. The submission channel for official runs opens with the public launch. Until then, send your public-split scorecard and trace generator, and the model holder will coordinate the private-split run.</p>
+
+    <figure class="fig rv">
+      <div class="rings">
+        <div class="ring"><span class="dial" style="--p:20"><b>0.20</b></span><span class="r-lab">path-success of the reference walker baseline.</span></div>
+        <div class="ring"><span class="dial" style="--p:0"><b>0.00</b></span><span class="r-lab">detection-evasion of the same baseline under the detection-deployed posture.</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 2</span> &nbsp; The two scored channels for the reference walker, the only real entry on the board. It finds a fraction of the reachable surface but evades nothing, the gap a stronger agent is built to close.</figcaption>
+    </figure>
+
+  </div>
+</article>
+<footer class="doc-foot">
+  <a href="../index.html">&#8592; Harbinger Labs</a>
+  <span class="fine">Harbinger Labs · world models for cybersecurity</span>
+  <a href="index.html">all writing &#8594;</a>
+</footer>
+<script src="article.js"></script>
+</body>
+</html>

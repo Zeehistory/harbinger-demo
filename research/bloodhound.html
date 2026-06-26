@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BloodHound integration · Harbinger Labs</title>
+<meta name="description" content="Importable BloodHound custom queries that surface the objects and edges most worth ranking inside an Active Directory forest." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="article.css" rel="stylesheet" />
+</head>
+<body>
+<nav class="doc-nav">
+  <a class="doc-brand" href="../index.html" aria-label="Harbinger Labs home">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M70 24 A33 33 0 1 0 76 64" fill="none" stroke="#17181A" stroke-width="5" stroke-linecap="round"/><circle cx="83" cy="30" r="4.4" fill="#1E7A70"/></svg>
+    <span>Harbinger Labs</span>
+  </a>
+  <a class="doc-back" href="index.html">all writing</a>
+</nav>
+<article class="doc doc-wide">
+  <header>
+    <p class="doc-eyebrow rv">bloodhound integration</p>
+    <h1 class="doc-title rv">Seven queries for the paths worth <em>ranking</em></h1>
+    <p class="doc-lede rv">Importable BloodHound custom queries that surface the objects and edges most worth attention inside an Active Directory forest.</p>
+    <div class="doc-meta rv">
+      <span><b>7</b> queries</span>
+      <span><b>format</b> importable json</span>
+      <span><b>price</b> free</span>
+    </div>
+  </header>
+  <div class="doc-body">
+
+    <h2 class="rv"><span class="sec-no">01</span>Why these queries</h2>
+    <p class="rv">BloodHound shows you what paths exist. It maps reachability across an Active Directory forest, the directory service that governs identity and access on Windows networks, and lets you walk the graph by hand. What it does not do is rank. Every reachable path looks equal until a person decides which one to chase. Harbinger adds a ranking layer on top of the same collection, scoring paths by which ones are likely to succeed under the deployed security posture and which ones are likely to evade detection.</p>
+    <p class="rv">These seven queries sit in between. They surface the exact objects and edges that ranking reasons over, so you can see them in BloodHound directly, with or without running any further analysis. They are offered as a contribution to the ecosystem. There is no further analysis without a SharpHound collection first. SharpHound is the collector that produces the BloodHound graph, and these queries make that collection more legible.</p>
+    <p class="rv">All seven import under a single <strong>Harbinger</strong> category in the BloodHound query list. <span class="stat">4</span> return graph paths you can expand and pivot through. The other <span class="stat">3</span> return tables of accounts with the attributes that decide priority, such as Kerberos encryption type and the date a password was last set. Kerberos is the authentication protocol Active Directory uses.</p>
+
+    <div class="eq rv">
+      <div class="eq-row"><span class="var">queries</span><span class="op">=</span><span class="val">7</span><span class="op">=</span><span class="val">4</span> graph <span class="op">+</span> <span class="val">3</span> table<span class="lab">across 5 abuse families</span></div>
+    </div>
+
+    <div class="kpis rv">
+      <div class="kpi"><span class="k-num t-seal">7</span><span class="k-lab">importable custom queries</span></div>
+      <div class="kpi"><span class="k-num">4</span><span class="k-lab">return graph paths to pivot through</span></div>
+      <div class="kpi"><span class="k-num">3</span><span class="k-lab">return ranked account tables</span></div>
+      <div class="kpi"><span class="k-num">5</span><span class="k-lab">abuse families covered</span></div>
+    </div>
+
+    <div class="callout rv">
+      <span class="callout-k">the complement</span>
+      <p>BloodHound shows what is reachable. These queries help surface what is likely to matter. A ranking layer can then sort the reachable paths by whether they are likely to succeed under the deployed posture and whether the logs are likely to record them, and point to the change that reduces the most risk.</p>
+    </div>
+
+    <figure class="fig rv">
+      <div class="flow">
+        <div class="step on"><span class="s-k">collect</span><span class="s-t">reachability</span><span class="s-d">BloodHound maps every path that exists.</span></div>
+        <div class="step"><span class="s-k">rank</span><span class="s-t">likelihood</span><span class="s-d">Scry scores which reachable paths actually succeed.</span></div>
+        <div class="step"><span class="s-k">prioritize</span><span class="s-t">the shortlist</span><span class="s-d">the few paths worth fixing first.</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 1</span> &nbsp; The complement. BloodHound surfaces reachability, the ranking layer scores likelihood and visibility, and the defender is left with a prioritized shortlist.</figcaption>
+    </figure>
+
+    <h2 class="rv"><span class="sec-no">02</span>The seven queries</h2>
+    <p class="rv">Each query targets a class of misconfiguration that often shapes an engagement: kerberoastable service accounts, dangerous write access onto high-value objects, unconstrained delegation, live sessions that bridge a foothold to the core, and the cross-domain trust edges along which a single compromise can travel. Kerberoasting is a technique that requests service tickets for accounts with a registered service principal name and cracks them offline.</p>
+
+    <div class="table-wrap rv">
+      <table class="data">
+        <caption>the harbinger query set, as it appears in BloodHound</caption>
+        <thead>
+          <tr><th>query</th><th>what it surfaces</th><th>returns</th><th>family</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Kerberoastable SPN accounts (with encryption type)</td>
+            <td>Enabled accounts with a service principal name, listed with their supported encryption type and the date a password was last set, so weaker-crypto accounts rank first. A service principal name (SPN) is a label that ties an account to a service.</td>
+            <td>table</td>
+            <td class="t-seal">kerberos</td>
+          </tr>
+          <tr>
+            <td>Kerberoastable SPN accounts (graph)</td>
+            <td>The same enabled, SPN-bearing users rendered as graph nodes for pivoting into adjacent edges.</td>
+            <td>graph</td>
+            <td class="t-seal">kerberos</td>
+          </tr>
+          <tr>
+            <td>GenericWrite / WriteDacl / GenericAll over high-value targets</td>
+            <td>Any principal holding a dangerous write or ownership permission directly onto a high-value object. These are access-control entries, the rules that grant rights over a directory object.</td>
+            <td>graph</td>
+            <td class="t-seal">acl abuse</td>
+          </tr>
+          <tr>
+            <td>Unconstrained delegation accounts</td>
+            <td>Computers and users flagged for unconstrained delegation, excluding the domain controllers group, where it is expected.</td>
+            <td>graph</td>
+            <td class="t-seal">delegation</td>
+          </tr>
+          <tr>
+            <td>Session-bearing paths to Domain Admins</td>
+            <td>Live sessions that chain through group membership and access-control abuse into the Domain Admins group (the security identifier ending in -512). These are the foothold-to-core bridges.</td>
+            <td>graph</td>
+            <td class="t-seal">sessions</td>
+          </tr>
+          <tr>
+            <td>ACL paths from low-privilege users to kerberoastable targets</td>
+            <td>Shortest paths from Domain Users (the security identifier ending in -513) into an enabled kerberoastable account via access-control or group abuse.</td>
+            <td>graph</td>
+            <td class="t-seal">acl abuse</td>
+          </tr>
+          <tr>
+            <td>Cross-domain trust edges (forest map)</td>
+            <td>Every domain trust relationship, drawn as a forest map so one compromise can be reasoned about across domain boundaries.</td>
+            <td>graph</td>
+            <td class="t-seal">trust topology</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="fig rv">
+      <div class="rings">
+        <div class="ring"><span class="dial" style="--p:57"><b>4</b></span><span class="r-lab">graph queries that return attack paths</span></div>
+        <div class="ring"><span class="dial" style="--p:43"><b>3</b></span><span class="r-lab">table queries that return prioritized lists</span></div>
+      </div>
+      <figcaption><span class="fig-no">figure 2</span> &nbsp; The split across the seven queries. Four return graph paths to pivot through, and three return ranked account tables.</figcaption>
+    </figure>
+
+    <p class="rv">Three of these are worth reading in full, because the filter is where the priority lives. The first ranks roastable accounts by their encryption type, putting weaker crypto at the top of the list. The next finds the session bridges that connect a workstation foothold to a domain takeover. The last maps the trust edges that determine how far a single compromise can travel.</p>
+
+    <div class="code rv">
+      <span class="c-cap">kerberoastable SPN accounts, with encryption type</span>
+      <pre>MATCH (u:User)
+WHERE u.hasspn = true AND u.enabled = true
+RETURN u.name AS account,
+       u.serviceprincipalnames AS spns,
+       u.supportedencryptiontypes AS encryption_type,
+       u.pwdlastset AS pwd_last_set
+ORDER BY u.supportedencryptiontypes</pre>
+    </div>
+
+    <div class="code rv">
+      <span class="c-cap">session-bearing paths to Domain Admins</span>
+      <pre>MATCH p = (c:Computer)-[:HasSession]->(u:User)
+          -[:MemberOf|AddMember|GenericAll|GenericWrite|WriteDacl|Owns*1..]->(g:Group)
+WHERE g.objectid ENDS WITH '-512'
+RETURN p</pre>
+    </div>
+
+    <div class="code rv">
+      <span class="c-cap">cross-domain trust edges, forest map</span>
+      <pre>MATCH p = (a:Domain)-[r:TrustedBy]->(b:Domain)
+RETURN p</pre>
+    </div>
+
+    <h2 class="rv"><span class="sec-no">03</span>How to import</h2>
+    <p class="rv">The query set ships as <code class="inline">bloodhound_queries.json</code>. It surfaces the objects and edges the queries describe and is useful on its own, whether or not you run any further analysis. If you already keep custom queries, merge the <code class="inline">queries</code> array rather than overwriting. The new ones appear under the Harbinger category.</p>
+
+    <div class="code rv">
+      <span class="c-cap">import</span>
+      <pre># Legacy BloodHound (Electron GUI): copy the file, then restart the app.
+# Windows
+%USERPROFILE%\AppData\Roaming\bloodhound\customqueries.json
+# macOS
+~/Library/Application Support/bloodhound/customqueries.json
+# Linux
+~/.config/bloodhound/customqueries.json
+
+# BloodHound CE: paste any query's Cypher into the search bar,
+# or add it via Settings -> Custom Queries.</pre>
+    </div>
+
+    <p class="rv">To produce a complete export, run SharpHound with session and local-admin collection enabled. Those edges are the foothold-to-core bridges. Without them, the analysis reports a collection gap rather than a false claim of no path.</p>
+
+    <div class="code rv">
+      <span class="c-cap">collect, then analyze</span>
+      <pre>SharpHound.exe -c All,Session,LoggedOn,LocalAdmin
+harbinger analyze --export bloodhound.json</pre>
+    </div>
+
+    <div class="callout warn rv">
+      <span class="callout-k">on scope</span>
+      <p>The ranking layer has been validated against real attack execution on a lab forest with native Windows event-log ground truth. It has not yet been validated against production endpoint-detection systems or real enterprise networks. The queries above are plain Cypher and carry no such caveat. They run anywhere BloodHound does.</p>
+    </div>
+
+    <p class="rv">BloodHound answers whether a path can be walked. The ranking layer estimates whether it is likely to succeed under the deployed posture, whether the logs are likely to record it, and which change reduces the most risk. It is additive to the BloodHound ecosystem, not a replacement. It consumes the export and adds a layer. It does not change how you collect or visualize.</p>
+
+  </div>
+</article>
+<footer class="doc-foot">
+  <a href="../index.html">&#8592; Harbinger Labs</a>
+  <span class="fine">Harbinger Labs · world models for cybersecurity</span>
+  <a href="index.html">all writing &#8594;</a>
+</footer>
+<script src="article.js"></script>
+</body>
+</html>
