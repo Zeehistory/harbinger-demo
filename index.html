@@ -216,6 +216,23 @@
   }
   .why__punch span{ color:var(--faint); }
 
+  /* ============ CONTACT / FORM ============ */
+  .contact{ min-height:78vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:clamp(48px,9vh,110px) var(--gut); }
+  .form{ margin-top:clamp(40px,5vw,66px); width:100%; max-width:640px; text-align:left; }
+  .form__grid{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(22px,2.6vw,32px) clamp(26px,3vw,44px); }
+  @media(max-width:560px){ .form__grid{ grid-template-columns:1fr; } }
+  .field{ display:flex; flex-direction:column; gap:9px; }
+  .field span{ font-family:var(--term); font-size:15px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); }
+  .field input{ background:transparent; border:0; border-bottom:1px solid var(--line); color:#fff; font-family:var(--body); font-size:17px; padding:9px 2px; transition:border-color .3s var(--ease); }
+  .field input:focus{ outline:none; border-color:#fff; }
+  .field input.bad{ border-color:#E2685F; }
+  .link-btn{ margin-top:clamp(32px,3.8vw,48px); display:inline-flex; align-items:center; gap:12px; background:none; border:0; cursor:pointer; color:#fff; font-family:var(--term); font-size:22px; letter-spacing:.12em; text-transform:uppercase; padding:6px 1px; position:relative; }
+  .link-btn::after{ content:""; position:absolute; left:0; bottom:0; height:1px; width:100%; background:#fff; transform:scaleX(0); transform-origin:right; transition:transform .35s var(--ease); }
+  .link-btn:hover::after{ transform:scaleX(1); transform-origin:left; }
+  .link-btn__arr{ transition:transform .35s var(--ease); }
+  .link-btn:hover .link-btn__arr{ transform:translateX(8px); }
+  .form__done{ margin-top:clamp(32px,4vw,52px); font-family:var(--term); font-size:21px; letter-spacing:.04em; color:var(--ink-2); }
+
   /* reveals */
   .reveal{ opacity:0; transform:translateY(20px); transition:opacity 1s var(--ease), transform 1s var(--ease); }
   .reveal.in{ opacity:1; transform:none; }
@@ -227,11 +244,9 @@
 <!-- ===== fixed grid ===== -->
 <div class="grid" aria-hidden="true">
   <div class="grid__frame"></div>
-  <div class="grid__v"></div>
   <div class="grid__h"></div>
   <span class="tick tl"></span><span class="tick tr"></span>
   <span class="tick bl"></span><span class="tick br"></span>
-  <span class="tick ct"></span>
 </div>
 
 <!-- ===== nav ===== -->
@@ -244,7 +259,7 @@
           <circle cx="86" cy="28" r="6" fill="#fff"/>
         </svg>
       </span>
-      <span class="nav__name">Harbinger Labs</span>
+      <span class="nav__name">Harbinger</span>
     </a>
     <div class="nav__links">
       <a href="#approach">Approach</a>
@@ -262,7 +277,7 @@
     <div class="split split--tall">
       <div class="cell cell--text cell--center">
         <h1 class="hero__title"><span class="setup">Security trained on the past can only see the past.</span> <span class="key">We build models that foresee the breach.</span></h1>
-        <p class="hero__sub"><b>Harbinger Labs builds world models for cybersecurity.</b> Scry learns a network as a place it can simulate forward — and ranks how an intrusion will move through it, and where your sensors go blind, before the breach happens.</p>
+        <p class="hero__sub"><b>Harbinger Labs builds world models for cybersecurity.</b> Scry simulates your network forward to rank the next intrusion — and the blind spots it would slip through — before the breach.</p>
       </div>
       <div class="cell cell--art">
         <canvas class="art" id="art-orb" data-motif="orb" aria-label="Animated ASCII rendering of a scrying eye over a network field."></canvas>
@@ -305,7 +320,7 @@
   <section class="panel" id="frontier">
     <div class="split">
       <div class="cell cell--art">
-        <canvas class="art" id="art-city" data-motif="city" aria-label="Animated ASCII rendering of a network as a city of hosts."></canvas>
+        <canvas class="art" id="art-net" data-motif="network" aria-label="Animated ASCII rendering of a network graph with packets traveling between hosts."></canvas>
       </div>
       <div class="cell cell--text cell--center">
         <h2 class="head reveal">Trained on networks no one has seen.</h2>
@@ -317,7 +332,7 @@
         <ul class="bullets reveal">
           <li><b>Attack-path models</b> that rank where an intrusion moves next</li>
           <li><b>World models</b> that predict the outcome of each move</li>
-          <li><b>Blind-spot models</b> that surface where your sensors go dark</li>
+          <li><b>Blind-spot models</b> that surface where your telemetry goes dark</li>
         </ul>
       </div>
     </div>
@@ -332,19 +347,12 @@
     <div class="idx">
       <a class="entry reveal" href="research/goad-validation.html">
         <span class="entry__t">Validating sim-to-emulation rank transfer on GOAD</span>
-        <span class="entry__m">validation note</span>
       </a>
       <a class="entry reveal" href="research/benchmark.html">
         <span class="entry__t">An open benchmark for autonomous security agents</span>
-        <span class="entry__m">benchmark</span>
-      </a>
-      <a class="entry reveal" href="research/harbinger-cli.html">
-        <span class="entry__t">harbinger-cli — score your own network, locally</span>
-        <span class="entry__m">free local tool</span>
       </a>
       <a class="entry reveal" href="research/bloodhound.html">
         <span class="entry__t">Scry queries for BloodHound</span>
-        <span class="entry__m">integration</span>
       </a>
     </div>
   </section>
@@ -366,9 +374,18 @@
 
   <!-- ============ CLOSING / CONTACT ============ -->
   <section class="panel" id="contact">
-    <div class="close">
+    <div class="contact">
       <p class="close__line reveal"><span>Every breach was once only a possibility.</span> <b>We study the possibility.</b></p>
-      <a class="cta reveal" href="mailto:research@harbinger.dev?subject=Access%20to%20Scry"><span class="cta__t">Request access to Scry <span class="cta__arr">→</span></span></a>
+      <form class="form reveal" id="accessForm" novalidate>
+        <div class="form__grid">
+          <label class="field"><span>Name</span><input name="name" type="text" autocomplete="name" required></label>
+          <label class="field"><span>Work email</span><input name="email" type="email" autocomplete="email" required></label>
+          <label class="field"><span>Organization</span><input name="org" type="text" autocomplete="organization"></label>
+          <label class="field"><span>What are you defending?</span><input name="use" type="text"></label>
+        </div>
+        <button class="link-btn" type="submit"><span class="link-btn__t">Request access</span><span class="link-btn__arr">→</span></button>
+      </form>
+      <p class="form__done" id="formDone" hidden>Request received. We'll reach you at the address you gave.</p>
     </div>
   </section>
 
@@ -383,7 +400,7 @@
           </svg>
         </div>
         <div class="foot__name">Harbinger Labs</div>
-        <p class="foot__tagline">World models for cybersecurity. We study the breach before it happens.</p>
+        <p class="foot__tagline">World models for cybersecurity. We see the attack before it moves.</p>
       </div>
       <div class="foot__cell foot__col">
         <h4>Navigate</h4>
@@ -432,15 +449,21 @@
       ? { base:[26,72,40], hi:[150,255,180], accent:[150,110,235] }
       : { base:[40,58,96], hi:[170,200,255], accent:[255,150,60] };
 
-    let W=0,H=0,cols=0,rows=0,cw=9,ch=11;
+    let W=0,H=0,cols=0,rows=0,cw=9,ch=11,AR=1;
     let _s=20260626; const rnd=()=>{ _s=(_s*1103515245+12345)&0x7fffffff; return _s/0x7fffffff; };
-    const SKY=[]; for(let i=0;i<40;i++) SKY.push(0.30+rnd()*0.62);
+    // network graph (seeded): nodes + nearest-neighbour edges
+    const NODES=[]; for(let i=0;i<11;i++) NODES.push({x:0.10+rnd()*0.80, y:0.10+rnd()*0.80});
+    const EDGES=[];
+    for(let i=0;i<NODES.length;i++){
+      const near=NODES.map((n,j)=>({j,d:(n.x-NODES[i].x)**2+(n.y-NODES[i].y)**2})).filter(o=>o.j!==i).sort((a,b)=>a.d-b.d);
+      for(let k=0;k<2;k++){ const j=near[k].j; if(!EDGES.some(e=>e.a===j&&e.b===i)) EDGES.push({a:i,b:j,phase:rnd()}); }
+    }
 
     function resize(){
       const r=canvas.getBoundingClientRect(); W=Math.max(40,r.width); H=Math.max(40,r.height);
       canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
       cw=Math.max(7, Math.min(11, W/86)); ch=cw*1.22;
-      cols=Math.ceil(W/cw); rows=Math.ceil(H/ch);
+      cols=Math.ceil(W/cw); rows=Math.ceil(H/ch); AR=H/W;
       ctx.font=Math.round(cw*1.5)+'px "VT323", monospace';
       ctx.textBaseline='top';
     }
@@ -465,16 +488,27 @@
         v += 0.20*Math.exp(-Math.pow((ny-(cyo+0.30*Math.sin(t*0.5)))/0.018,2));       // scan sweep
         if(d>ringR-0.03 && d<ringR+0.03){ const a=Math.sin((nx*53.1+ny*97.7+t))*43758.5; if(a-Math.floor(a)>0.91) acc=0.92; }
       } else {
-        const hz=0.40;
-        if(ny>hz){
-          const b=Math.floor(nx*SKY.length), h=SKY[b%SKY.length];
-          const top=hz+(1-h)*(1-hz)*0.92;
-          if(ny>top){
-            v += 0.55;
-            const win=((Math.floor(nx*cols)*7 + Math.floor(ny*rows)*13 + b*5))%11;
-            if(win===0){ acc=0.55+0.45*Math.sin(t*1.8+b); }
-          } else { v*=0.42; }
-        } else { v*=0.5 + 0.5*Math.exp(-Math.pow((ny-0.16)/0.2,2)); }
+        // ---- network graph: hosts, links, and packets in flight (pulsing up & down) ----
+        v = 0.08 + 0.10*(0.5+0.5*Math.sin((nx*1.5+ny)*7 - t*0.6));
+        for(let k=0;k<EDGES.length;k++){
+          const A=NODES[EDGES[k].a], B=NODES[EDGES[k].b];
+          const dx=B.x-A.x, dy=B.y-A.y, len2=dx*dx+dy*dy*AR*AR||1e-6;
+          let u=((nx-A.x)*dx+(ny-A.y)*dy*AR*AR)/len2; u=u<0?0:u>1?1:u;
+          const pd=Math.hypot(nx-(A.x+dx*u),(ny-(A.y+dy*u))*AR);
+          if(pd<0.013){
+            const e=1-pd/0.013;
+            if(e*0.30>v) v=e*0.30;
+            const pos=((t*0.22)+EDGES[k].phase)%1;
+            const pk=Math.exp(-Math.pow((u-pos)/0.06,2))*e;   // the packet
+            v += pk*0.85; if(pk>acc) acc=pk;
+          }
+        }
+        for(let i=0;i<NODES.length;i++){
+          const dd=Math.hypot(nx-NODES[i].x,(ny-NODES[i].y)*AR);
+          const pulse=0.6+0.4*Math.sin(t*1.0 + i*0.9);        // host brightness breathes
+          v += Math.exp(-Math.pow(dd/0.019,2))*pulse;
+          v += 0.35*Math.exp(-Math.pow((dd-0.032)/0.011,2))*pulse;
+        }
       }
       return { v:Math.max(0,Math.min(1,v)), acc:Math.max(0,acc) };
     }
@@ -512,6 +546,43 @@
       vis.observe(canvas);
     }
   }
+  /* evidence numbers: a quiet left-to-right "decrypt" when they enter view */
+  (function stats(){
+    const nums=document.querySelectorAll('.ev__num'); if(!nums.length) return;
+    const run=(el)=>{
+      const t=el.firstChild; if(!t||t.nodeType!==3) return;
+      const target=t.nodeValue;
+      if(REDUCED) return;
+      const g="0123456789"; let i=0;
+      const id=setInterval(()=>{
+        let out="";
+        for(let k=0;k<target.length;k++){ const c=target[k];
+          out += (k<=i||c==='.'||c===' ') ? c : g[(Math.random()*10)|0];
+        }
+        t.nodeValue=out; i+=0.5;
+        if(i>=target.length){ t.nodeValue=target; clearInterval(id); }
+      }, 45);
+    };
+    const o=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ run(e.target); o.unobserve(e.target); } }); }, {threshold:0.6});
+    nums.forEach(n=>o.observe(n));
+  })();
+
+  /* access form: light validation + inline confirmation */
+  (function accessForm(){
+    const f=document.getElementById('accessForm'); if(!f) return;
+    const ok=(v)=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+    f.addEventListener('submit',(e)=>{
+      e.preventDefault();
+      const name=f.name.value.trim(), email=f.email.value.trim();
+      f.name.classList.toggle('bad', !name);
+      f.email.classList.toggle('bad', !ok(email));
+      if(!name || !ok(email)) return;
+      f.hidden=true;
+      const done=document.getElementById('formDone'); if(done) done.hidden=false;
+    });
+    [f.name,f.email].forEach(i=> i.addEventListener('input',()=> i.classList.remove('bad')));
+  })();
+
   document.querySelectorAll('.art').forEach(makeAscii);
 </script>
 </body>
