@@ -142,6 +142,7 @@
   /* ============ EVIDENCE ============ */
   .ev__head{ padding:clamp(24px,3vw,40px) var(--gut) 0; }
   .ev__k{ font-family:var(--pixel); font-weight:500; font-size:clamp(16px,1.6vw,20px); }
+  .ev__k--big{ font-size:clamp(36px,5.5vw,64px); line-height:1.04; }
   .ev__sub{ margin-top:8px; color:var(--faint); font-size:15px; font-family:var(--term); letter-spacing:.04em; }
   .ev__row{ display:grid; grid-template-columns:repeat(2,1fr); margin-top:clamp(24px,3vw,40px); }
   @media(min-width:820px){ .ev__row{ grid-template-columns:repeat(4,1fr); } }
@@ -164,7 +165,7 @@
 
   /* ============ CLOSING ============ */
   .close{ min-height:70vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:var(--gut); }
-  .close__line{ font-family:var(--pixel); font-weight:500; font-size:clamp(26px,4.2vw,56px); line-height:1.12; max-width:16ch; }
+  .close__line{ font-family:var(--pixel); font-weight:500; font-size:clamp(23px,3.3vw,44px); line-height:1.22; max-width:none; }
   .close__line span{ color:var(--ink-2); }
   .close__line b{ font-weight:500; color:#fff; text-shadow:var(--glow); }
   .cta{
@@ -350,7 +351,7 @@
   <!-- ============ RESEARCH / FIELD NOTES ============ -->
   <section class="panel" id="research">
     <div class="ev__head reveal">
-      <div class="ev__k">Research</div>
+      <div class="ev__k ev__k--big">Research</div>
     </div>
     <div class="idx">
       <a class="entry reveal" href="research/goad-validation.html">
@@ -387,7 +388,7 @@
   <!-- ============ CLOSING / CONTACT ============ -->
   <section class="panel" id="contact">
     <div class="close">
-      <p class="close__line reveal"><span>Every breach was once only a possibility.</span> <b>We end it there.</b></p>
+      <p class="close__line reveal"><span>Every breach was once only a possibility.</span><br><b>We end it there.</b></p>
       <a class="link-btn reveal" href="access.html"><span class="link-btn__t">Request access</span><span class="link-btn__arr">→</span></a>
     </div>
   </section>
